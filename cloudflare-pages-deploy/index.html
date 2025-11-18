@@ -83,6 +83,29 @@
             background: #1e6bbf;
         }
 
+        /* 日期输入框 */
+        .date-input {
+            padding: 6px 10px;
+            border: 1px solid #e9e9e7;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #37352f;
+            background: white;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .date-input:hover {
+            border-color: #d3d3d1;
+            background: #f7f6f3;
+        }
+
+        .date-input:focus {
+            outline: none;
+            border-color: #2383e2;
+            box-shadow: 0 0 0 3px rgba(35, 131, 226, 0.1);
+        }
+
         /* 标签页导航 */
         .tabs {
             display: flex;
@@ -1038,13 +1061,21 @@
                             <div class="slicer-title">时间段</div>
                             <div class="time-slicer">
                                 <div class="time-option active" data-period="today" onclick="selectTimePeriod('today')">今天</div>
+                                <div class="time-option" data-period="current-week" onclick="selectTimePeriod('current-week')">本周</div>
                                 <div class="time-option" data-period="current-month" onclick="selectTimePeriod('current-month')">本月</div>
                                 <div class="time-option" data-period="last-month" onclick="selectTimePeriod('last-month')">上月</div>
-                                <div class="time-option" data-period="current-quarter" onclick="selectTimePeriod('current-quarter')">本季度</div>
-                                <div class="time-option" data-period="current-year" onclick="selectTimePeriod('current-year')">本年</div>
-                                <div class="time-option" data-period="last-3-months" onclick="selectTimePeriod('last-3-months')">近3个月</div>
-                                <div class="time-option" data-period="last-6-months" onclick="selectTimePeriod('last-6-months')">近6个月</div>
-                                <div class="time-option" data-period="all" onclick="selectTimePeriod('all')">全部</div>
+                                <div class="time-option" data-period="current-year" onclick="selectTimePeriod('current-year')">年度</div>
+                            </div>
+                        </div>
+
+                        <!-- 自定义时间段筛选器 -->
+                        <div class="slicer-container compact" style="margin-left: 20px;">
+                            <div class="slicer-title">自定义时间段</div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="date" id="startDate" class="date-input" onchange="applyCustomDateRange()">
+                                <span>至</span>
+                                <input type="date" id="endDate" class="date-input" onchange="applyCustomDateRange()">
+                                <button class="toolbar-btn" onclick="clearCustomDateRange()" style="padding: 5px 10px;">清除</button>
                             </div>
                         </div>
                     </div>
@@ -1252,6 +1283,7 @@
             cacheTimestamp: null,
             currentEditingCell: null,
             currentTimePeriod: 'today',
+            customDateRange: null, // 自定义日期范围
             currentStatus: '',
             currentMerchant: '',
             batchMode: false,
@@ -1331,6 +1363,11 @@
 
         // 获取时间段的日期范围
         function getDateRange(period) {
+            // 如果使用自定义时间段
+            if (period === 'custom' && state.customDateRange) {
+                return state.customDateRange;
+            }
+
             const now = new Date();
             const year = now.getFullYear();
             const month = now.getMonth();
@@ -1342,39 +1379,32 @@
                         start: new Date(year, month, day, 0, 0, 0),
                         end: new Date(year, month, day, 23, 59, 59)
                     };
+                case 'current-week':
+                    // 获取本周一（周一为一周开始）
+                    const dayOfWeek = now.getDay();
+                    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // 周日的话往前推6天
+                    const monday = new Date(year, month, day + diff);
+                    const sunday = new Date(monday);
+                    sunday.setDate(monday.getDate() + 6);
+                    return {
+                        start: new Date(monday.getFullYear(), monday.getMonth(), monday.getDate(), 0, 0, 0),
+                        end: new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate(), 23, 59, 59)
+                    };
                 case 'current-month':
                     return {
                         start: new Date(year, month, 1),
-                        end: new Date(year, month + 1, 0)
+                        end: new Date(year, month + 1, 0, 23, 59, 59)
                     };
                 case 'last-month':
                     return {
                         start: new Date(year, month - 1, 1),
-                        end: new Date(year, month, 0)
-                    };
-                case 'current-quarter':
-                    const quarterStart = Math.floor(month / 3) * 3;
-                    return {
-                        start: new Date(year, quarterStart, 1),
-                        end: new Date(year, quarterStart + 3, 0)
+                        end: new Date(year, month, 0, 23, 59, 59)
                     };
                 case 'current-year':
                     return {
                         start: new Date(year, 0, 1),
-                        end: new Date(year, 11, 31)
+                        end: new Date(year, 11, 31, 23, 59, 59)
                     };
-                case 'last-3-months':
-                    return {
-                        start: new Date(year, month - 3, 1),
-                        end: new Date(year, month + 1, 0)
-                    };
-                case 'last-6-months':
-                    return {
-                        start: new Date(year, month - 6, 1),
-                        end: new Date(year, month + 1, 0)
-                    };
-                case 'all':
-                    return null;
                 default:
                     return null;
             }
@@ -1495,13 +1525,66 @@
         // 时间段选择
         function selectTimePeriod(period) {
             state.currentTimePeriod = period;
+            state.customDateRange = null; // 清除自定义日期范围
 
             document.querySelectorAll('.time-option').forEach(opt => {
                 opt.classList.remove('active');
             });
             document.querySelector(`[data-period="${period}"]`).classList.add('active');
 
+            // 清空自定义日期输入框
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+
             loadTransactions();
+        }
+
+        // 应用自定义日期范围
+        function applyCustomDateRange() {
+            const startDateInput = document.getElementById('startDate');
+            const endDateInput = document.getElementById('endDate');
+
+            if (!startDateInput.value || !endDateInput.value) {
+                return; // 如果没有选择完整的日期范围，不执行
+            }
+
+            // 解析日期
+            const startDate = new Date(startDateInput.value);
+            const endDate = new Date(endDateInput.value);
+
+            // 验证日期有效性
+            if (startDate > endDate) {
+                showMessage('开始日期不能晚于结束日期', 'error');
+                return;
+            }
+
+            // 设置时间为当天的开始和结束
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(23, 59, 59, 999);
+
+            // 保存自定义日期范围
+            state.customDateRange = {
+                start: startDate,
+                end: endDate
+            };
+            state.currentTimePeriod = 'custom';
+
+            // 取消所有时间段选项的激活状态
+            document.querySelectorAll('.time-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+
+            loadTransactions();
+        }
+
+        // 清除自定义日期范围
+        function clearCustomDateRange() {
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+            state.customDateRange = null;
+
+            // 恢复到"今天"
+            selectTimePeriod('today');
         }
 
         // 切换下拉面板
