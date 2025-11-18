@@ -33,6 +33,7 @@ export default async function handler(req, res) {
       const clientToken = req.headers['x-proxy-token'];
 
       if (!clientToken) {
+        res.setHeader('Access-Control-Allow-Origin', '*');
         return res.status(401).json({
           error: 'Unauthorized',
           message: 'Missing X-Proxy-Token header',
@@ -40,6 +41,7 @@ export default async function handler(req, res) {
       }
 
       if (clientToken !== PROXY_TOKEN) {
+        res.setHeader('Access-Control-Allow-Origin', '*');
         return res.status(403).json({
           error: 'Forbidden',
           message: 'Invalid proxy token',
