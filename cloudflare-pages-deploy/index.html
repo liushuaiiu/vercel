@@ -205,13 +205,15 @@
         }
 
         .date-input-compact:hover {
-            border-color: #d3d3d1;
-            background: #f7f6f3;
+            border-color: #C4D3C7;
+            background: #E3EBE5;
         }
 
         .date-input-compact:focus {
             outline: none;
             border-color: #7A9B7F;
+            background: #E3EBE5;
+            box-shadow: 0 0 0 2px rgba(122, 155, 127, 0.1);
         }
 
         .clear-btn {
@@ -1118,7 +1120,6 @@
 <div class="filters-unified">
     <!-- 时间段筛选 -->
     <div class="filter-section">
-        <div class="filter-label">时间段</div>
         <div class="time-slicer">
             <div class="time-option active" data-period="today" onclick="selectTimePeriod('today')">今天</div>
             <div class="time-option" data-period="current-week" onclick="selectTimePeriod('current-week')">本周</div>
