@@ -546,8 +546,9 @@
             padding-bottom: 300px; /* 为底部下拉框预留空间 */
         }
 
-        .table-wrapper > div {
-            overflow-x: auto;
+        #tableContainer {
+            overflow: visible;
+            min-height: 500px;
         }
 
         /* 统计页样式 */
@@ -689,6 +690,11 @@
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
+            overflow: visible;
+        }
+
+        tbody {
+            overflow: visible;
         }
 
         thead th {
