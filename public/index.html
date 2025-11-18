@@ -981,6 +981,9 @@
             }
         }
     </style>
+
+    <!-- 安全配置文件（不提交到 Git） -->
+    <script src="config.js" defer></script>
 </head>
 <body>
     <div id="message" class="message"></div>
@@ -1221,15 +1224,26 @@
 
     <script>
         // ==================== 配置常量 ====================
-        const CONFIG = {
-            API_BASE: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                ? 'http://localhost:3000'
-                : 'https://billing-api.liushuaiiu.workers.dev',
-            API_KEY: 'aae90c7477688efd9f98a2eb16aa5a2f75165dd6c45205d5de289864fb90cfea',
+        // 从外部 config.js 文件读取配置（如果存在），否则使用当前域名
+        const CONFIG = window.APP_CONFIG || {
+            // 使用 Vercel 代理（当前域名）而不是直接访问 Cloudflare
+            API_BASE: window.location.origin,
+
+            // ⚠️ 安全警告：请勿在此硬编码密钥！
+            // 创建 config.js 文件并配置以下值
+            API_KEY: '',
+            PROXY_TOKEN: '',
+
             CACHE_DURATION: 5 * 60 * 1000, // 5分钟缓存
             MESSAGE_DURATION: 3000,
             DEBOUNCE_DELAY: 300
         };
+
+        // 配置验证
+        if (!CONFIG.API_KEY || !CONFIG.PROXY_TOKEN) {
+            console.error('⚠️ 配置错误：请创建 config.js 文件并配置 API_KEY 和 PROXY_TOKEN');
+            console.info('💡 参考 config.example.js 创建配置文件');
+        }
 
         const NECESSITY_OPTIONS = ['必要', '非必要', '可选'];
 
@@ -1259,7 +1273,9 @@
         // API 请求封装
         async function apiFetch(url, options = {}) {
             const headers = {
+                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${CONFIG.API_KEY}`,
+                'X-Proxy-Token': CONFIG.PROXY_TOKEN,
                 ...options.headers
             };
 
@@ -1270,9 +1286,13 @@
 
             if (!response.ok) {
                 if (response.status === 401) {
-                    throw new Error('API 密钥无效或未提供');
+                    throw new Error('认证失败：API 密钥无效或未提供');
                 }
-                throw new Error('API 请求失败');
+                if (response.status === 403) {
+                    throw new Error('访问被拒绝：代理令牌无效');
+                }
+                const errorText = await response.text();
+                throw new Error(`API 请求失败 (${response.status}): ${errorText}`);
             }
             return response;
         }
