@@ -1,0 +1,12 @@
+# 本地开发环境变量示例
+# 复制此文件为 .dev.vars 并填入实际值
+# ⚠️ .dev.vars 不应提交到 Git
+
+# Vercel 代理域名
+API_BASE=https://vercel.wuwamao.com
+
+# Cloudflare Workers API 密钥
+API_KEY=your-cloudflare-api-key-here
+
+# Vercel 代理令牌
+PROXY_TOKEN=your-proxy-token-here
