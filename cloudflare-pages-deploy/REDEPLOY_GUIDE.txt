@@ -1,0 +1,148 @@
+╔═══════════════════════════════════════════════════════════════╗
+║            ⚠️ 重要：重新部署以修复 MIME 类型错误             ║
+╚═══════════════════════════════════════════════════════════════╝
+
+您当前遇到的错误：
+"Refused to execute as script because Content-Type is not a script MIME type"
+
+✅ 这个问题已经修复！但您需要重新部署。
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔧 修复内容
+
+已修改：cloudflare-pages-deploy/functions/config.js.js
+
+修改：
+- Content-Type: application/javascript; charset=utf-8
+- 明确设置 status: 200
+- 添加正确的字符编码
+
+这是 JavaScript 的标准 MIME 类型，应该被所有浏览器正确识别。
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 重新部署步骤（2 分钟完成）
+
+步骤 1: 删除现有部署
+
+1. 访问 Cloudflare Dashboard
+   https://dash.cloudflare.com
+
+2. 找到您的项目 "billing-manager"
+
+3. Settings → 滚动到底部 → Delete project
+   （或者保留项目，直接上传新文件覆盖）
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+步骤 2: 重新下载文件夹
+
+从 GitHub 重新下载最新的 cloudflare-pages-deploy 文件夹。
+
+或者从命令行：
+git pull origin claude/query-repository-01MZyeEYGzFyj3T4CQEiyFBZ
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+步骤 3: 重新上传到 Cloudflare Pages
+
+1. Workers & Pages → Create → Pages → Upload assets
+
+2. 拖拽整个 cloudflare-pages-deploy 文件夹
+   ⚠️ 重要：必须包含 functions 子文件夹！
+
+3. 项目名称：billing-manager（或其他名称）
+
+4. Deploy
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+步骤 4: 配置环境变量
+
+部署完成后，立即配置环境变量：
+
+1. Settings → Environment variables
+
+2. 添加 3 个变量：
+
+   变量名: API_BASE
+   值: https://vercel.wuwamao.com
+   环境: Production ✓
+
+   变量名: API_KEY
+   值: aae90c7477688efd9f98a2eb16aa5a2f75165dd6c45205d5de289864fb90cfea
+   环境: Production ✓
+
+   变量名: PROXY_TOKEN
+   值: a2d4a299e1ae11ab089b5cb3560de483fb346355a214b9742ba06c0897dc9695
+   环境: Production ✓
+
+3. Save
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+步骤 5: 重新部署使环境变量生效
+
+1. Deployments → 找到最新部署
+
+2. 点击 "..." → Retry deployment
+
+3. 等待完成
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ 验证部署
+
+访问：https://billing-manager.pages.dev
+
+打开浏览器控制台（F12），应该看到：
+
+✅ 配置加载成功
+🔗 API 代理地址: https://vercel.wuwamao.com
+
+不应该再看到：
+❌ Refused to execute 错误
+❌ 配置错误提示
+❌ SyntaxError
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔍 故障排查
+
+如果还是有问题：
+
+1. 确认 functions/config.js.js 文件已上传
+   - 在 Deployments → 点击部署 → Source
+   - 应该能看到 functions/config.js.js
+
+2. 测试配置端点
+   访问：https://billing-manager.pages.dev/config.js
+   应该返回 JavaScript 代码（不是 404）
+
+3. 检查环境变量
+   Settings → Environment variables
+   确认 3 个变量都已配置
+
+4. 清除浏览器缓存
+   Ctrl + Shift + R（强制刷新）
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 技术说明
+
+修复前：text/javascript
+修复后：application/javascript; charset=utf-8
+
+application/javascript 是标准的 JavaScript MIME 类型，
+符合 RFC 4329 和 WHATWG 标准。
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏱️ 预计时间：2-3 分钟
+
+重新部署后问题应该就解决了！
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+最后更新：2025-11-18
