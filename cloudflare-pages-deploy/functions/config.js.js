@@ -13,9 +13,9 @@ export async function onRequest(context) {
         return new Response(
             'console.error("⚠️ 环境变量未配置！请在 Cloudflare Pages 设置中配置 API_KEY 和 PROXY_TOKEN");',
             {
-                status: 500,
+                status: 200,  // 改为 200 以便浏览器执行
                 headers: {
-                    'Content-Type': 'application/javascript',
+                    'Content-Type': 'text/javascript; charset=utf-8',
                 },
             }
         );
@@ -48,7 +48,7 @@ console.log('🔗 API 代理地址:', window.APP_CONFIG.API_BASE);
 
     return new Response(config, {
         headers: {
-            'Content-Type': 'application/javascript',
+            'Content-Type': 'text/javascript; charset=utf-8',
             'Cache-Control': 'no-store, no-cache, must-revalidate, private',
             'Pragma': 'no-cache',
             'Expires': '0',
