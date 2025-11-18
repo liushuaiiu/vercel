@@ -1116,101 +1116,11 @@
                 min-width: 120px;
             }
         }
-
-        /* Flatpickr 自定义样式 - 鼠尾草绿配色 */
-        .flatpickr-calendar {
-            background: #EDF2EE;
-            border: 1px solid #C4D3C7;
-            border-radius: 6px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-        }
-
-        .flatpickr-months {
-            background: #E3EBE5;
-        }
-
-        .flatpickr-current-month {
-            color: #37352f;
-        }
-
-        .flatpickr-month {
-            color: #37352f;
-        }
-
-        .flatpickr-weekdays {
-            background: #E3EBE5;
-        }
-
-        .flatpickr-weekday {
-            color: #787774;
-            font-weight: 500;
-        }
-
-        .flatpickr-day {
-            color: #37352f;
-            border-radius: 4px;
-        }
-
-        .flatpickr-day:hover {
-            background: #E3EBE5;
-            border-color: #C4D3C7;
-        }
-
-        .flatpickr-day.selected,
-        .flatpickr-day.startRange,
-        .flatpickr-day.endRange {
-            background: #7A9B7F;
-            border-color: #7A9B7F;
-            color: white;
-        }
-
-        .flatpickr-day.selected:hover,
-        .flatpickr-day.startRange:hover,
-        .flatpickr-day.endRange:hover {
-            background: #6A8A6F;
-            border-color: #6A8A6F;
-        }
-
-        .flatpickr-day.today {
-            border-color: #7A9B7F;
-            background: rgba(122, 155, 127, 0.1);
-        }
-
-        .flatpickr-day.today:hover {
-            background: #E3EBE5;
-            border-color: #7A9B7F;
-        }
-
-        .flatpickr-months .flatpickr-prev-month:hover,
-        .flatpickr-months .flatpickr-next-month:hover {
-            color: #7A9B7F;
-        }
-
-        .flatpickr-months .flatpickr-prev-month svg,
-        .flatpickr-months .flatpickr-next-month svg {
-            fill: #787774;
-        }
-
-        .flatpickr-months .flatpickr-prev-month:hover svg,
-        .flatpickr-months .flatpickr-next-month:hover svg {
-            fill: #7A9B7F;
-        }
-
-        .flatpickr-day.inRange {
-            background: rgba(122, 155, 127, 0.2);
-            border-color: transparent;
-            box-shadow: none;
-        }
     </style>
 
     <!-- 安全配置文件（从 Cloudflare Pages Functions 动态加载） -->
     <!-- 注意：必须同步加载，不能使用 defer，否则配置检查会在加载前执行 -->
     <script src="/api/config"></script>
-
-    <!-- Flatpickr 日期选择器 -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/zh.js"></script>
 </head>
 <body>
     <div id="message" class="message"></div>
@@ -1263,8 +1173,8 @@
             <div class="time-option" data-period="current-month" onclick="selectTimePeriod('current-month')">本月</div>
             <div class="time-option" data-period="last-month" onclick="selectTimePeriod('last-month')">上月</div>
             <div class="time-option" data-period="current-year" onclick="selectTimePeriod('current-year')">年度</div>
-            <input type="date" id="startDate" class="date-input-compact" onchange="applyCustomDateRange()" style="margin-left: 12px;">
-            <input type="date" id="endDate" class="date-input-compact" onchange="applyCustomDateRange()">
+            <input type="text" id="startDate" class="date-input-compact" placeholder="2024-01-01" onblur="applyCustomDateRange()" style="margin-left: 12px;">
+            <input type="text" id="endDate" class="date-input-compact" placeholder="2024-12-31" onblur="applyCustomDateRange()">
             <button class="clear-btn" onclick="clearCustomDateRange()">✕</button>
         </div>
     </div>
@@ -1881,7 +1791,14 @@
             const endDateInput = document.getElementById('endDate');
 
             if (!startDateInput.value || !endDateInput.value) {
-                return; // 如果没有选择完整的日期范围，不执行
+                return; // 如果没有输入完整的日期范围，不执行
+            }
+
+            // 验证日期格式 YYYY-MM-DD
+            const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+            if (!datePattern.test(startDateInput.value) || !datePattern.test(endDateInput.value)) {
+                showMessage('日期格式错误，请使用 YYYY-MM-DD 格式（如 2024-01-01）', 'error');
+                return;
             }
 
             // 解析日期
@@ -1889,6 +1806,11 @@
             const endDate = new Date(endDateInput.value);
 
             // 验证日期有效性
+            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                showMessage('日期无效，请检查输入', 'error');
+                return;
+            }
+
             if (startDate > endDate) {
                 showMessage('开始日期不能晚于结束日期', 'error');
                 return;
@@ -3193,33 +3115,12 @@
                 await loadAllTransactions();
                 await loadTransactions();
 
-                // 初始化 Flatpickr 日期选择器
-                flatpickr("#startDate", {
-                    locale: "zh",
-                    dateFormat: "Y-m-d",
-                    onChange: function(selectedDates, dateStr, instance) {
-                        if (dateStr && document.getElementById('endDate').value) {
-                            applyCustomDateRange();
-                        }
-                    }
-                });
-
-                flatpickr("#endDate", {
-                    locale: "zh",
-                    dateFormat: "Y-m-d",
-                    onChange: function(selectedDates, dateStr, instance) {
-                        if (dateStr && document.getElementById('startDate').value) {
-                            applyCustomDateRange();
-                        }
-                    }
-                });
-
                 console.log('✅ 系统已加载 (优化版 v3.1)');
                 console.log('🔧 修复: 编辑单元格时自动关闭上一个编辑框');
                 console.log('🔧 修复: 支持包含特殊字符的商家名称(如单引号)');
                 console.log('🆕 新增: 类目和场景使用独立数据表管理');
                 console.log('🔧 修复: 类目排行和场景排行使用新的字段结构 (category_id/channel_id)');
-                console.log('🎨 新增: Flatpickr 日期选择器（鼠尾草绿配色）');
+                console.log('🎨 新增: 简洁的文本日期输入（YYYY-MM-DD 格式）');
             } catch (error) {
                 console.error('初始化失败:', error);
                 showMessage('系统初始化失败', 'error');
