@@ -1,5 +1,5 @@
-# 本地配置文件（如果有的话）
-config.js
+# 本地配置文件（仅忽略根目录，不忽略 functions/config.js）
+/config.js
 
 # 环境变量
 .env
