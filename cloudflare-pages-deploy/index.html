@@ -541,9 +541,13 @@
 
         /* 表格样式 - Notion 风格 */
         .table-wrapper {
+            overflow: visible;
+            padding: 0 40px 40px 40px;
+            padding-bottom: 300px; /* 为底部下拉框预留空间 */
+        }
+
+        .table-wrapper > div {
             overflow-x: auto;
-            overflow-y: visible;
-            padding: 0 40px 40px;
         }
 
         /* 统计页样式 */
@@ -1152,7 +1156,7 @@
 
         <!-- 账单页内容 -->
         <div id="bills-tab" class="tab-content active">
-            <div style="padding: 20px 40px;">
+            <div style="padding: 20px 40px; overflow: visible;">
                 <!-- 工具栏 -->
                 <div class="toolbar">
                 </div>
