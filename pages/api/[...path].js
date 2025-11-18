@@ -49,8 +49,8 @@ export default async function handler(req, res) {
     const { path } = req.query;
     const requestPath = Array.isArray(path) ? path.join('/') : path || '';
 
-    // 构建完整的目标 URL
-    const targetUrl = `${CLOUDFLARE_API}/${requestPath}${req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : ''}`;
+    // 构建完整的目标 URL（保留 /api/ 前缀）
+    const targetUrl = `${CLOUDFLARE_API}/api/${requestPath}${req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : ''}`;
 
     // 准备转发的请求头（排除一些不应转发的头）
     const forwardHeaders = {};
