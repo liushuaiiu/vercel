@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配置检查工具</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 40px;
+            background: #1a1a1a;
+            color: #00ff00;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #00ff00;
+            border-bottom: 2px solid #00ff00;
+            padding-bottom: 10px;
+        }
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 8px;
+        }
+        .config-item {
+            margin: 15px 0;
+            padding: 10px;
+            background: #1a1a1a;
+            border-left: 3px solid #00ff00;
+        }
+        .label {
+            color: #ffaa00;
+            font-weight: bold;
+        }
+        .value {
+            color: #00ff00;
+            word-break: break-all;
+        }
+        .error {
+            color: #ff0000;
+        }
+        .success {
+            color: #00ff00;
+        }
+        .warning {
+            color: #ffaa00;
+        }
+        button {
+            background: #00ff00;
+            color: #1a1a1a;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #00cc00;
+        }
+        .copy-btn {
+            background: #0088ff;
+            color: white;
+            font-size: 12px;
+            padding: 5px 10px;
+            margin-left: 10px;
+        }
+        #test-result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #1a1a1a;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 账单管理系统配置检查工具</h1>
+
+    <div class="section">
+        <h2>📋 当前配置信息</h2>
+        <div id="config-display"></div>
+    </div>
+
+    <div class="section">
+        <h2>🔍 配置验证</h2>
+        <div id="validation-result"></div>
+    </div>
+
+    <div class="section">
+        <h2>🧪 连接测试</h2>
+        <button onclick="testConnection()">测试 Vercel 代理连接</button>
+        <button onclick="testWorkerDirect()">测试 Workers 直连</button>
+        <div id="test-result"></div>
+    </div>
+
+    <div class="section">
+        <h2>📝 配置说明</h2>
+        <p>需要确保三个地方的密钥一致：</p>
+        <ol>
+            <li><strong>config.js</strong>（前端配置文件）
+                <ul>
+                    <li>API_KEY：用于 Cloudflare Workers 认证（Authorization: Bearer）</li>
+                    <li>PROXY_TOKEN：用于 Vercel 代理认证（X-Proxy-Token）</li>
+                </ul>
+            </li>
+            <li><strong>Vercel 环境变量</strong>（代理服务器）
+                <ul>
+                    <li>PROXY_TOKEN：必须与 config.js 中的 PROXY_TOKEN 完全一致</li>
+                </ul>
+            </li>
+            <li><strong>Cloudflare Workers 环境变量</strong>（后端 API）
+                <ul>
+                    <li>API_KEY：必须与 config.js 中的 API_KEY 完全一致</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <script src="/config.js"></script>
+    <script>
+        // 显示配置
+        function displayConfig() {
+            const configDiv = document.getElementById('config-display');
+            const config = window.APP_CONFIG || {};
+
+            let html = '';
+
+            // API_BASE
+            html += `
+                <div class="config-item">
+                    <div class="label">API_BASE (代理地址):</div>
+                    <div class="value">${config.API_BASE || '<span class="error">未配置</span>'}</div>
+                </div>
+            `;
+
+            // API_KEY
+            const apiKey = config.API_KEY || '';
+            const apiKeyDisplay = apiKey
+                ? `${apiKey.substring(0, 10)}...${apiKey.substring(apiKey.length - 10)} (长度: ${apiKey.length})`
+                : '<span class="error">未配置</span>';
+            html += `
+                <div class="config-item">
+                    <div class="label">API_KEY (Workers 认证密钥):</div>
+                    <div class="value">${apiKeyDisplay}</div>
+                    ${apiKey ? `<button class="copy-btn" onclick="copyToClipboard('${apiKey}', 'API_KEY')">复制完整密钥</button>` : ''}
+                </div>
+            `;
+
+            // PROXY_TOKEN
+            const proxyToken = config.PROXY_TOKEN || '';
+            const tokenDisplay = proxyToken
+                ? `${proxyToken.substring(0, 10)}...${proxyToken.substring(proxyToken.length - 10)} (长度: ${proxyToken.length})`
+                : '<span class="error">未配置</span>';
+            html += `
+                <div class="config-item">
+                    <div class="label">PROXY_TOKEN (Vercel 代理令牌):</div>
+                    <div class="value">${tokenDisplay}</div>
+                    ${proxyToken ? `<button class="copy-btn" onclick="copyToClipboard('${proxyToken}', 'PROXY_TOKEN')">复制完整令牌</button>` : ''}
+                </div>
+            `;
+
+            configDiv.innerHTML = html;
+        }
+
+        // 验证配置
+        function validateConfig() {
+            const validationDiv = document.getElementById('validation-result');
+            const config = window.APP_CONFIG || {};
+            let errors = [];
+            let warnings = [];
+
+            if (!config.API_KEY) {
+                errors.push('❌ API_KEY 未配置');
+            } else if (config.API_KEY === '在此填写你的 API_KEY') {
+                errors.push('❌ API_KEY 未修改（仍为示例值）');
+            } else if (config.API_KEY.length < 32) {
+                warnings.push('⚠️ API_KEY 长度过短（通常应为 64 个字符）');
+            }
+
+            if (!config.PROXY_TOKEN) {
+                errors.push('❌ PROXY_TOKEN 未配置');
+            } else if (config.PROXY_TOKEN === '在此填写你的 PROXY_TOKEN') {
+                errors.push('❌ PROXY_TOKEN 未修改（仍为示例值）');
+            } else if (config.PROXY_TOKEN.length < 32) {
+                warnings.push('⚠️ PROXY_TOKEN 长度过短（通常应为 64 个字符）');
+            }
+
+            if (!config.API_BASE) {
+                errors.push('❌ API_BASE 未配置');
+            }
+
+            let html = '';
+            if (errors.length > 0) {
+                html += '<div class="error">' + errors.join('<br>') + '</div>';
+            }
+            if (warnings.length > 0) {
+                html += '<div class="warning">' + warnings.join('<br>') + '</div>';
+            }
+            if (errors.length === 0 && warnings.length === 0) {
+                html = '<div class="success">✅ 所有配置项格式正确</div>';
+            }
+
+            validationDiv.innerHTML = html;
+        }
+
+        // 测试 Vercel 代理连接
+        async function testConnection() {
+            const resultDiv = document.getElementById('test-result');
+            resultDiv.innerHTML = '<div class="warning">⏳ 正在测试连接...</div>';
+
+            const config = window.APP_CONFIG || {};
+
+            try {
+                const response = await fetch(`${config.API_BASE}/api/merchants`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${config.API_KEY}`,
+                        'X-Proxy-Token': config.PROXY_TOKEN
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ 连接成功！<br>
+                            状态码: ${response.status}<br>
+                            数据: ${JSON.stringify(data, null, 2)}
+                        </div>
+                    `;
+                } else {
+                    let errorMsg = '';
+                    if (response.status === 403) {
+                        errorMsg = `
+                            <strong>❌ 403 Forbidden - 代理令牌验证失败</strong><br>
+                            <br>
+                            <strong>问题分析：</strong><br>
+                            您的 config.js 中的 PROXY_TOKEN 与 Vercel 环境变量中的 PROXY_TOKEN 不一致。<br>
+                            <br>
+                            <strong>解决方法：</strong><br>
+                            1. 复制上方显示的完整 PROXY_TOKEN<br>
+                            2. 登录 Vercel 控制台<br>
+                            3. 进入项目设置 → Environment Variables<br>
+                            4. 找到 PROXY_TOKEN 变量<br>
+                            5. 将其值修改为与 config.js 中完全一致<br>
+                            6. 重新部署 Vercel 项目<br>
+                            <br>
+                            <strong>注意：</strong>密钥必须完全一致，包括大小写和空格！
+                        `;
+                    } else if (response.status === 401) {
+                        errorMsg = `
+                            <strong>❌ 401 Unauthorized - Workers API 密钥验证失败</strong><br>
+                            <br>
+                            您的 config.js 中的 API_KEY 与 Cloudflare Workers 环境变量中的 API_KEY 不一致。
+                        `;
+                    } else {
+                        errorMsg = `❌ 请求失败<br>状态码: ${response.status}`;
+                    }
+
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            ${errorMsg}<br>
+                            <br>
+                            响应详情: ${JSON.stringify(data, null, 2)}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        ❌ 网络错误<br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // 测试 Workers 直连
+        async function testWorkerDirect() {
+            const resultDiv = document.getElementById('test-result');
+            resultDiv.innerHTML = '<div class="warning">⏳ 正在测试 Workers 直连...</div>';
+
+            const config = window.APP_CONFIG || {};
+
+            try {
+                const response = await fetch(`https://billing-api.liushuaiiu.workers.dev/api/merchants`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${config.API_KEY}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ Workers 直连成功！<br>
+                            说明：API_KEY 是正确的，问题在于 Vercel 的 PROXY_TOKEN<br>
+                            <br>
+                            状态码: ${response.status}<br>
+                            数据: ${JSON.stringify(data, null, 2)}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            ❌ Workers 认证失败（状态码 ${response.status}）<br>
+                            说明：config.js 中的 API_KEY 与 Cloudflare Workers 环境变量不一致<br>
+                            <br>
+                            响应: ${JSON.stringify(data, null, 2)}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        ❌ Workers 直连失败<br>
+                        可能原因：网络问题或 CORS 限制<br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // 复制到剪贴板
+        function copyToClipboard(text, label) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert(`${label} 已复制到剪贴板！`);
+            }).catch(err => {
+                alert('复制失败，请手动复制');
+                console.error('复制失败:', err);
+            });
+        }
+
+        // 页面加载时执行
+        window.addEventListener('DOMContentLoaded', () => {
+            displayConfig();
+            validateConfig();
+        });
+    </script>
+</body>
+</html>
