@@ -1029,7 +1029,6 @@
             <div style="padding: 20px 40px;">
                 <!-- 工具栏 -->
                 <div class="toolbar">
-                    <button class="toolbar-btn primary" onclick="exportToCSV()">导出 CSV</button>
                     <button class="toolbar-btn primary" onclick="exportToExcel()">导出 Excel</button>
                     <button class="toolbar-btn" onclick="toggleBatchMode()">
                         <span id="batchModeText">批量选择</span>
@@ -2204,45 +2203,6 @@
 
         // ==================== 数据导出 ====================
 
-        // 导出为 CSV
-        function exportToCSV() {
-            if (state.transactionsData.length === 0) {
-                showMessage('没有数据可导出', 'error');
-                return;
-            }
-
-            const headers = ['日期', '摘要', '金额', '商家', '类目', '场景', '必要性', '备注'];
-            const rows = state.transactionsData.map(t => {
-                const merchantName = t.merchant_id ?
-                    (state.merchantsData.find(m => m.id === t.merchant_id)?.name || '未知') : '';
-                
-                return [
-                    t.date,
-                    t.summary,
-                    t.amount,
-                    merchantName,
-                    t.category || '',
-                    t.payment_channel || '',
-                    t.is_necessary || '',
-                    t.notes || ''
-                ];
-            });
-
-            let csvContent = '\uFEFF'; // UTF-8 BOM
-            csvContent += headers.join(',') + '\n';
-            rows.forEach(row => {
-                csvContent += row.map(cell => `"${cell}"`).join(',') + '\n';
-            });
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `账单数据_${new Date().toISOString().split('T')[0]}.csv`;
-            link.click();
-
-            showMessage('CSV 导出成功', 'success');
-        }
-
         // 导出为 Excel
         function exportToExcel() {
             if (state.transactionsData.length === 0) {
@@ -2803,13 +2763,6 @@
                 e.preventDefault();
                 exportToExcel();
             }
-            
-            // Ctrl/Cmd + S: 导出 CSV
-            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-                e.preventDefault();
-                exportToCSV();
-            }
-            
             // Ctrl/Cmd + R: 刷新数据
             if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
                 e.preventDefault();
@@ -2833,7 +2786,7 @@
                 await loadAllTransactions();
                 await loadTransactions();
                 console.log('✅ 系统已加载 (优化版 v3.1)');
-                console.log('💡 快捷键: Ctrl+E(导出Excel) | Ctrl+S(导出CSV) | Ctrl+R(刷新) | Ctrl+B(批量模式)');
+                console.log('💡 快捷键: Ctrl+E(导出Excel) | Ctrl+R(刷新) | Ctrl+B(批量模式)');
                 console.log('🔧 修复: 编辑单元格时自动关闭上一个编辑框');
                 console.log('🔧 修复: 支持包含特殊字符的商家名称(如单引号)');
                 console.log('🆕 新增: 类目和场景使用独立数据表管理');
