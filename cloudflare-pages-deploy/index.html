@@ -693,32 +693,44 @@
             vertical-align: middle;
         }
 
-        /* 居中显示的列 - 非批量模式 */
+        /* 列对齐方式 - 非批量模式 */
         tbody tr:not(.batch-mode-row) td:nth-child(1),  /* 日期 */
-        tbody tr:not(.batch-mode-row) td:nth-child(2),  /* 摘要 */
+        tbody tr:not(.batch-mode-row) td:nth-child(2) { /* 摘要 */
+            text-align: left;
+        }
+
         tbody tr:not(.batch-mode-row) td:nth-child(3) { /* 金额 */
-            text-align: center;
+            text-align: right;
         }
 
-        /* 居中显示的列 - 批量模式 */
+        /* 列对齐方式 - 批量模式 */
         tbody tr.batch-mode-row td:nth-child(2),  /* 日期 */
-        tbody tr.batch-mode-row td:nth-child(3),  /* 摘要 */
+        tbody tr.batch-mode-row td:nth-child(3) { /* 摘要 */
+            text-align: left;
+        }
+
         tbody tr.batch-mode-row td:nth-child(4) { /* 金额 */
-            text-align: center;
+            text-align: right;
         }
 
-        /* 表头居中 - 非批量模式 */
-        thead tr:not(.batch-mode-header) th:nth-child(1),
-        thead tr:not(.batch-mode-header) th:nth-child(2),
-        thead tr:not(.batch-mode-header) th:nth-child(3) {
-            text-align: center;
+        /* 表头对齐方式 - 非批量模式 */
+        thead tr:not(.batch-mode-header) th:nth-child(1),  /* 日期 */
+        thead tr:not(.batch-mode-header) th:nth-child(2) { /* 摘要 */
+            text-align: left;
         }
 
-        /* 表头居中 - 批量模式 */
-        thead tr.batch-mode-header th:nth-child(2),
-        thead tr.batch-mode-header th:nth-child(3),
-        thead tr.batch-mode-header th:nth-child(4) {
-            text-align: center;
+        thead tr:not(.batch-mode-header) th:nth-child(3) { /* 金额 */
+            text-align: right;
+        }
+
+        /* 表头对齐方式 - 批量模式 */
+        thead tr.batch-mode-header th:nth-child(2),  /* 日期 */
+        thead tr.batch-mode-header th:nth-child(3) { /* 摘要 */
+            text-align: left;
+        }
+
+        thead tr.batch-mode-header th:nth-child(4) { /* 金额 */
+            text-align: right;
         }
 
         /* 商家、类目、场景、必要性列标题居中 - 非批量模式 */
@@ -1155,9 +1167,7 @@
             <div class="time-option" data-period="current-month" onclick="selectTimePeriod('current-month')">本月</div>
             <div class="time-option" data-period="last-month" onclick="selectTimePeriod('last-month')">上月</div>
             <div class="time-option" data-period="current-year" onclick="selectTimePeriod('current-year')">年度</div>
-            <span style="color: #787774; font-size: 11px; margin: 0 6px 0 12px;">自定义：</span>
-            <input type="date" id="startDate" class="date-input-compact" onchange="applyCustomDateRange()">
-            <span style="margin: 0 4px; color: #787774; font-size: 11px;">至</span>
+            <input type="date" id="startDate" class="date-input-compact" onchange="applyCustomDateRange()" style="margin-left: 12px;">
             <input type="date" id="endDate" class="date-input-compact" onchange="applyCustomDateRange()">
             <button class="clear-btn" onclick="clearCustomDateRange()">✕</button>
         </div>
