@@ -715,6 +715,7 @@
 
         tbody tr {
             transition: background 0.1s;
+            overflow: visible;
         }
 
         tbody tr:hover {
@@ -731,6 +732,8 @@
             font-size: 12px;
             color: #37352f;
             vertical-align: middle;
+            overflow: visible;
+            position: relative;
         }
 
         /* 列对齐方式 - 非批量模式 */
@@ -759,12 +762,12 @@
             cursor: pointer;
             position: relative;
             min-height: 36px;
-            height: 36px;
             display: flex;
             align-items: center;
             padding: 6px 8px;
             border-radius: 3px;
             transition: background 0.1s;
+            overflow: visible;
         }
 
         .editable-cell:hover {
