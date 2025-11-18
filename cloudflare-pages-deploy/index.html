@@ -1143,9 +1143,9 @@
         }
     </style>
 
-    <!-- 安全配置文件（从 Cloudflare Pages Functions 动态加载） -->
+    <!-- 安全配置文件（静态加载，适用于直接上传部署） -->
     <!-- 注意：必须同步加载，不能使用 defer，否则配置检查会在加载前执行 -->
-    <script src="/api/config"></script>
+    <script src="/config.js"></script>
 </head>
 <body>
     <div id="message" class="message"></div>
