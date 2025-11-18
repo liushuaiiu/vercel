@@ -17,6 +17,16 @@ export const config = {
 
 export default async function handler(req, res) {
   try {
+    // ⚠️ 重要：OPTIONS 预检请求必须在 token 验证之前处理
+    // 浏览器发送的 CORS preflight 请求不会包含自定义 headers
+    if (req.method === 'OPTIONS') {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Proxy-Token');
+      res.setHeader('Access-Control-Max-Age', '86400'); // 24小时缓存
+      return res.status(200).end();
+    }
+
     // 🔒 安全验证：检查代理访问令牌
     // 如果配置了 PROXY_TOKEN，则必须验证
     if (PROXY_TOKEN) {
@@ -35,14 +45,6 @@ export default async function handler(req, res) {
           message: 'Invalid proxy token',
         });
       }
-    }
-
-    // 处理 OPTIONS 预检请求（CORS）
-    if (req.method === 'OPTIONS') {
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', '*');
-      return res.status(200).end();
     }
 
     // 获取请求路径
