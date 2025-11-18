@@ -1,0 +1,8 @@
+# Headers for Functions-generated JavaScript
+/api/config
+  Content-Type: application/javascript; charset=utf-8
+  Cache-Control: no-store, no-cache, must-revalidate, private
+
+/config.js
+  Content-Type: application/javascript; charset=utf-8
+  Cache-Control: no-store, no-cache, must-revalidate, private
