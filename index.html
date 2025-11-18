@@ -1,0 +1,2827 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>账单管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+            background: #f7f6f3;
+            padding: 20px;
+            color: #37352f;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        /* 头部 */
+        .header {
+            padding: 40px 40px 0;
+            border-bottom: 1px solid #e9e9e7;
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #37352f;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #787774;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        /* 工具栏 */
+        .toolbar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-btn {
+            padding: 8px 16px;
+            border: 1px solid #e9e9e7;
+            border-radius: 4px;
+            background: white;
+            color: #37352f;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .toolbar-btn:hover {
+            background: #f7f6f3;
+            border-color: #d3d3d1;
+        }
+
+        .toolbar-btn.primary {
+            background: #2383e2;
+            color: white;
+            border-color: #2383e2;
+        }
+
+        .toolbar-btn.primary:hover {
+            background: #1e6bbf;
+        }
+
+        /* 标签页导航 */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+            border-bottom: 1px solid #e9e9e7;
+        }
+
+        .tab {
+            padding: 8px 12px;
+            font-size: 14px;
+            color: #787774;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-weight: 500;
+        }
+
+        .tab:hover {
+            color: #37352f;
+            background: #f7f6f3;
+        }
+
+        .tab.active {
+            color: #37352f;
+            border-bottom-color: #2383e2;
+        }
+
+        /* 标签页内容 */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 筛选栏 */
+        .filters {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .filter-item {
+            position: relative;
+        }
+
+        .filter-item label {
+            display: block;
+            font-size: 12px;
+            color: #787774;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        /* 切片器容器 */
+        .slicer-container {
+            background: white;
+            border: 1px solid #e9e9e7;
+            border-radius: 6px;
+            padding: 12px;
+        }
+
+        .slicer-container.time-slicer-container {
+            flex: 1;
+            min-width: 400px;
+        }
+
+        .slicer-container.compact {
+            min-width: 180px;
+        }
+
+        .slicer-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: #787774;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* 时间段切片器 */
+        .time-slicer {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 6px;
+        }
+
+        .time-option {
+            padding: 6px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #37352f;
+            background: #f7f6f3;
+            border: 1px solid transparent;
+            transition: all 0.15s;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .time-option:hover {
+            background: #e9e9e7;
+            border-color: #d3d3d1;
+        }
+
+        .time-option.active {
+            background: #2383e2;
+            color: white;
+            font-weight: 500;
+            border-color: #2383e2;
+        }
+
+        /* 下拉选择器样式 */
+        .select-filter {
+            position: relative;
+            min-width: 180px;
+        }
+
+        .select-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #e9e9e7;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #37352f;
+            transition: all 0.15s;
+            min-height: 36px;
+        }
+
+        .select-trigger:hover {
+            background: #f7f6f3;
+            border-color: #d3d3d1;
+        }
+
+        .select-trigger.active {
+            border-color: #2383e2;
+            box-shadow: 0 0 0 1px #2383e2;
+        }
+
+        .select-trigger-text {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .select-trigger-text.placeholder {
+            color: #9b9a97;
+        }
+
+        .select-trigger-arrow {
+            margin-left: 8px;
+            color: #9b9a97;
+            font-size: 10px;
+        }
+
+        .select-panel {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e9e9e7;
+            border-radius: 6px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+
+        .select-panel.show {
+            display: block;
+        }
+
+        .select-search {
+            padding: 8px;
+            border-bottom: 1px solid #e9e9e7;
+            position: sticky;
+            top: 0;
+            background: white;
+        }
+
+        .select-search input {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid #e9e9e7;
+            border-radius: 4px;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .select-search input:focus {
+            border-color: #2383e2;
+            box-shadow: 0 0 0 1px #2383e2;
+        }
+
+        .select-options {
+            padding: 4px;
+        }
+
+        .select-option-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #37352f;
+            transition: background 0.1s;
+        }
+
+        .select-option-item:hover {
+            background: #f7f6f3;
+        }
+
+        .select-option-item.selected {
+            background: #e3f2fd;
+            color: #2383e2;
+            font-weight: 500;
+        }
+
+        .select-checkbox {
+            width: 16px;
+            height: 16px;
+            border: 1px solid #d3d3d1;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .select-option-item.selected .select-checkbox {
+            background: #2383e2;
+            border-color: #2383e2;
+        }
+
+        .select-checkbox::after {
+            content: '✓';
+            color: white;
+            font-size: 12px;
+            display: none;
+        }
+
+        .select-option-item.selected .select-checkbox::after {
+            display: block;
+        }
+
+        .select-clear {
+            padding: 8px;
+            border-top: 1px solid #e9e9e7;
+            text-align: center;
+        }
+
+        .select-clear-btn {
+            color: #787774;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 3px;
+            transition: all 0.15s;
+        }
+
+        .select-clear-btn:hover {
+            background: #f7f6f3;
+            color: #37352f;
+        }
+
+        .filter-item input,
+        .filter-item select {
+            padding: 6px 10px;
+            border: 1px solid #e9e9e7;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+            color: #37352f;
+            transition: all 0.15s;
+        }
+
+        .filter-item input:focus,
+        .filter-item select:focus {
+            outline: none;
+            border-color: #2383e2;
+            box-shadow: 0 0 0 1px #2383e2;
+        }
+
+        /* 表格样式 - Notion 风格 */
+        .table-wrapper {
+            overflow-x: auto;
+            padding: 0 40px 40px;
+        }
+
+        /* 统计页样式 */
+        .stats-wrapper {
+            padding: 40px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid #e9e9e7;
+            border-radius: 8px;
+            padding: 24px;
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #787774;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #37352f;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #9b9a97;
+        }
+
+        .chart-container {
+            background: white;
+            border: 1px solid #e9e9e7;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            height: 400px;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #37352f;
+            margin-bottom: 20px;
+        }
+
+        .chart-canvas {
+            width: 100%;
+            height: 320px !important;
+            max-height: 320px !important;
+        }
+
+        /* 排行榜样式 */
+        .rank-list {
+            background: white;
+            border: 1px solid #e9e9e7;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .rank-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e9e9e7;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .rank-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #37352f;
+        }
+
+        .rank-item {
+            display: flex;
+            align-items: center;
+            padding: 16px 24px;
+            border-bottom: 1px solid #f7f6f3;
+            transition: background 0.15s;
+        }
+
+        .rank-item:hover {
+            background: #f7f6f3;
+        }
+
+        .rank-item:last-child {
+            border-bottom: none;
+        }
+
+        .rank-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .rank-name {
+            font-size: 15px;
+            font-weight: 500;
+            color: #37352f;
+            margin-bottom: 4px;
+        }
+
+        .rank-details {
+            font-size: 12px;
+            color: #9b9a97;
+        }
+
+        .rank-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #37352f;
+            white-space: nowrap;
+            margin-right: 16px;
+        }
+
+        .rank-bar {
+            width: 120px;
+            height: 8px;
+            background: #f7f6f3;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .rank-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2383e2, #1e6bbf);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        thead th {
+            background: white;
+            color: #787774;
+            font-weight: 500;
+            font-size: 12px;
+            text-align: left;
+            padding: 12px 8px;
+            border-bottom: 1px solid #e9e9e7;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        thead th input[type="checkbox"] {
+            cursor: pointer;
+        }
+
+        tbody tr {
+            transition: background 0.1s;
+        }
+
+        tbody tr:hover {
+            background: #f7f6f3;
+        }
+
+        tbody tr.selected {
+            background: #e3f2fd;
+        }
+
+        tbody td {
+            padding: 8px;
+            border-bottom: 1px solid #e9e9e7;
+            font-size: 14px;
+            color: #37352f;
+            vertical-align: middle;
+        }
+
+        /* 居中显示的列 - 非批量模式 */
+        tbody tr:not(.batch-mode-row) td:nth-child(1),  /* 日期 */
+        tbody tr:not(.batch-mode-row) td:nth-child(2),  /* 摘要 */
+        tbody tr:not(.batch-mode-row) td:nth-child(3) { /* 金额 */
+            text-align: center;
+        }
+
+        /* 居中显示的列 - 批量模式 */
+        tbody tr.batch-mode-row td:nth-child(2),  /* 日期 */
+        tbody tr.batch-mode-row td:nth-child(3),  /* 摘要 */
+        tbody tr.batch-mode-row td:nth-child(4) { /* 金额 */
+            text-align: center;
+        }
+
+        /* 表头居中 - 非批量模式 */
+        thead tr:not(.batch-mode-header) th:nth-child(1),
+        thead tr:not(.batch-mode-header) th:nth-child(2),
+        thead tr:not(.batch-mode-header) th:nth-child(3) {
+            text-align: center;
+        }
+
+        /* 表头居中 - 批量模式 */
+        thead tr.batch-mode-header th:nth-child(2),
+        thead tr.batch-mode-header th:nth-child(3),
+        thead tr.batch-mode-header th:nth-child(4) {
+            text-align: center;
+        }
+
+        /* 商家、类目、场景、必要性列标题居中 - 非批量模式 */
+        thead tr:not(.batch-mode-header) th:nth-child(4),
+        thead tr:not(.batch-mode-header) th:nth-child(5),
+        thead tr:not(.batch-mode-header) th:nth-child(6),
+        thead tr:not(.batch-mode-header) th:nth-child(7) {
+            text-align: center;
+        }
+
+        /* 商家、类目、场景、必要性列标题居中 - 批量模式 */
+        thead tr.batch-mode-header th:nth-child(5),
+        thead tr.batch-mode-header th:nth-child(6),
+        thead tr.batch-mode-header th:nth-child(7),
+        thead tr.batch-mode-header th:nth-child(8) {
+            text-align: center;
+        }
+
+        /* 可编辑单元格 */
+        .editable-cell {
+            cursor: pointer;
+            position: relative;
+            min-height: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            padding: 6px 8px;
+            border-radius: 3px;
+            transition: background 0.1s;
+        }
+
+        .editable-cell:hover {
+            background: rgba(0,0,0,0.03);
+        }
+
+        .editable-cell.editing {
+            background: white;
+            box-shadow: 0 0 0 2px #2383e2;
+        }
+
+        .editable-cell .placeholder {
+            color: #9b9a97;
+        }
+
+        /* 下拉选择器 - 支持搜索 */
+        .select-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+        }
+
+        .select-input {
+            width: 100%;
+            height: 100%;
+            padding: 6px 8px;
+            border: none;
+            font-size: 14px;
+            color: #37352f;
+            background: transparent;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .select-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e9e9e7;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .select-dropdown.show {
+            display: block;
+        }
+
+        .select-option {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #37352f;
+            transition: background 0.1s;
+        }
+
+        .select-option:hover {
+            background: #f7f6f3;
+        }
+
+        .select-option.selected {
+            background: #2383e2;
+            color: white;
+        }
+
+        .select-option.create-new {
+            color: #2383e2;
+            font-weight: 500;
+            border-top: 1px solid #e9e9e7;
+        }
+
+        .select-option.no-results {
+            color: #9b9a97;
+            cursor: default;
+        }
+
+        .select-option.no-results:hover {
+            background: transparent;
+        }
+
+        /* 标签样式 */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .badge-incomplete {
+            background: transparent;
+        }
+
+        .badge-complete {
+            background: transparent;
+        }
+
+        /* 金额 */
+        .amount {
+            font-weight: 600;
+            color: #37352f;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* 操作按钮 */
+        .action-btn {
+            padding: 4px 8px;
+            border: 1px solid #e9e9e7;
+            border-radius: 3px;
+            background: white;
+            color: #37352f;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .action-btn:hover {
+            background: #f7f6f3;
+        }
+
+        .action-btn.delete {
+            color: #eb5757;
+            border-color: #eb5757;
+        }
+
+        .action-btn.delete:hover {
+            background: #eb5757;
+            color: white;
+        }
+
+        /* 消息提示 */
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .message.show {
+            display: block;
+        }
+
+        .message.success {
+            background: #d3f5e3;
+            color: #0f5132;
+            border: 1px solid #a3e9c4;
+        }
+
+        .message.error {
+            background: #fdecea;
+            color: #d63626;
+            border: 1px solid #f5b5ae;
+        }
+
+        /* 加载状态 */
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9b9a97;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e9e9e7;
+            border-top-color: #2383e2;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 备注样式 */
+        .notes-cell {
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #787774;
+            font-size: 13px;
+        }
+
+        .notes-input {
+            width: 100%;
+            height: 100%;
+            padding: 6px 8px;
+            border: none;
+            font-size: 14px;
+            color: #37352f;
+            background: transparent;
+            outline: none;
+            resize: none;
+            font-family: inherit;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        /* 日期列 */
+        .date-cell {
+            color: #787774;
+            font-size: 13px;
+        }
+
+        /* 摘要列 */
+        .summary-cell {
+            font-weight: 500;
+        }
+
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #37352f;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #9b9a97;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+
+        .modal-close:hover {
+            background: #f7f6f3;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .header {
+                padding: 20px;
+            }
+
+            .table-wrapper {
+                padding: 0 20px 20px;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            .editable-cell {
+                font-size: 12px;
+            }
+
+            .filter-row {
+                flex-direction: column;
+            }
+
+            .slicer-container.time-slicer-container {
+                min-width: auto;
+            }
+
+            .time-slicer {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .slicer-container.compact {
+                min-width: auto;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .time-slicer {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="message" class="message"></div>
+
+    <!-- 批量操作模态框 -->
+    <div id="batchModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">批量操作</h3>
+                <button class="modal-close" onclick="closeBatchModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <p>已选择 <strong id="selectedCount">0</strong> 条记录</p>
+                <div style="margin-top: 20px;">
+                    <button class="toolbar-btn" onclick="batchDelete()">🗑️ 批量删除</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="toolbar-btn" onclick="closeBatchModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>账单管理</h1>
+            <p class="subtitle">我的账单 v3.1</p>
+
+            <!-- 标签页导航 -->
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('bills')">账单页</button>
+                <button class="tab" onclick="switchTab('stats')">统计页</button>
+                <button class="tab" onclick="switchTab('necessity')">必要性分析</button>
+                <button class="tab" onclick="switchTab('merchant-rank')">商家排行</button>
+                <button class="tab" onclick="switchTab('category-rank')">类目排行</button>
+                <button class="tab" onclick="switchTab('channel-rank')">场景排行</button>
+            </div>
+        </div>
+
+        <!-- 账单页内容 -->
+        <div id="bills-tab" class="tab-content active">
+            <div style="padding: 20px 40px;">
+                <!-- 工具栏 -->
+                <div class="toolbar">
+                    <button class="toolbar-btn primary" onclick="exportToCSV()">导出 CSV</button>
+                    <button class="toolbar-btn primary" onclick="exportToExcel()">导出 Excel</button>
+                    <button class="toolbar-btn" onclick="toggleBatchMode()">
+                        <span id="batchModeText">批量选择</span>
+                    </button>
+                    <button class="toolbar-btn" onclick="refreshData()">刷新数据</button>
+                </div>
+
+                <div class="filters">
+                    <!-- 第一行: 时间段切片器 -->
+                    <div class="filter-row">
+                        <div class="slicer-container time-slicer-container">
+                            <div class="slicer-title">时间段</div>
+                            <div class="time-slicer">
+                                <div class="time-option active" data-period="today" onclick="selectTimePeriod('today')">今天</div>
+                                <div class="time-option" data-period="current-month" onclick="selectTimePeriod('current-month')">本月</div>
+                                <div class="time-option" data-period="last-month" onclick="selectTimePeriod('last-month')">上月</div>
+                                <div class="time-option" data-period="current-quarter" onclick="selectTimePeriod('current-quarter')">本季度</div>
+                                <div class="time-option" data-period="current-year" onclick="selectTimePeriod('current-year')">本年</div>
+                                <div class="time-option" data-period="last-3-months" onclick="selectTimePeriod('last-3-months')">近3个月</div>
+                                <div class="time-option" data-period="last-6-months" onclick="selectTimePeriod('last-6-months')">近6个月</div>
+                                <div class="time-option" data-period="all" onclick="selectTimePeriod('all')">全部</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 第二行: 状态和商家 -->
+                    <div class="filter-row">
+                        <!-- 状态切片器 -->
+                        <div class="slicer-container compact">
+                            <div class="slicer-title">完善状态</div>
+                            <div class="select-filter">
+                                <div class="select-trigger" onclick="toggleSelectPanel('status')">
+                                    <span class="select-trigger-text" id="statusTriggerText">全部</span>
+                                    <span class="select-trigger-arrow">▼</span>
+                                </div>
+                                <div class="select-panel" id="statusPanel">
+                                    <div class="select-options">
+                                        <div class="select-option-item selected" data-value="" onclick="selectStatus('')">
+                                            <div class="select-checkbox"></div>
+                                            <span>全部</span>
+                                        </div>
+                                        <div class="select-option-item" data-value="complete" onclick="selectStatus('complete')">
+                                            <div class="select-checkbox"></div>
+                                            <span>已完善</span>
+                                        </div>
+                                        <div class="select-option-item" data-value="incomplete" onclick="selectStatus('incomplete')">
+                                            <div class="select-checkbox"></div>
+                                            <span>未完善</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 商家切片器 -->
+                        <div class="slicer-container compact">
+                            <div class="slicer-title">商家</div>
+                            <div class="select-filter">
+                                <div class="select-trigger" onclick="toggleSelectPanel('merchant')">
+                                    <span class="select-trigger-text" id="merchantTriggerText">全部商家</span>
+                                    <span class="select-trigger-arrow">▼</span>
+                                </div>
+                                <div class="select-panel" id="merchantPanel">
+                                    <div class="select-search">
+                                        <input type="text" placeholder="搜索商家..." id="merchantSearch" oninput="filterMerchants()" onclick="event.stopPropagation()">
+                                    </div>
+                                    <div class="select-options" id="merchantOptions">
+                                        <!-- 动态生成 -->
+                                    </div>
+                                    <div class="select-clear">
+                                        <span class="select-clear-btn" onclick="selectMerchant('')">清除选择</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <div id="tableContainer"></div>
+            </div>
+        </div>
+
+        <!-- 统计页内容 -->
+        <div id="stats-tab" class="tab-content">
+            <div class="stats-wrapper">
+                <!-- 统计卡片 -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>本月消费</h3>
+                        <div class="stat-value" id="monthTotal">¥0.00</div>
+                        <div class="stat-label">当前月份总支出</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>本年消费</h3>
+                        <div class="stat-value" id="yearTotal">¥0.00</div>
+                        <div class="stat-label">当前年度总支出</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>平均每日</h3>
+                        <div class="stat-value" id="dailyAvg">¥0.00</div>
+                        <div class="stat-label">本月日均消费</div>
+                    </div>
+                </div>
+
+                <!-- 本月消费趋势 -->
+                <div class="chart-container">
+                    <div class="chart-title">本月消费趋势</div>
+                    <canvas id="monthChart" class="chart-canvas"></canvas>
+                </div>
+
+                <!-- 本年消费趋势 -->
+                <div class="chart-container">
+                    <div class="chart-title">本年消费趋势</div>
+                    <canvas id="yearChart" class="chart-canvas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 必要性分析标签页 -->
+        <div id="necessity-tab" class="tab-content">
+            <div class="stats-wrapper">
+                <div class="chart-container">
+                    <div class="chart-title">必要性消费分析 (本年度月度堆叠)</div>
+                    <canvas id="necessityChart" class="chart-canvas"></canvas>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>必要消费</h3>
+                        <div class="stat-value" id="necessaryTotal">¥0.00</div>
+                        <div class="stat-label">必要性消费总额</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>非必要消费</h3>
+                        <div class="stat-value" id="unnecessaryTotal">¥0.00</div>
+                        <div class="stat-label">非必要性消费总额</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>可选消费</h3>
+                        <div class="stat-value" id="optionalTotal">¥0.00</div>
+                        <div class="stat-label">可选性消费总额</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 商家排行标签页 -->
+        <div id="merchant-rank-tab" class="tab-content">
+            <div class="stats-wrapper">
+                <div class="rank-list">
+                    <div class="rank-header">
+                        <div class="rank-title">商家消费排行榜</div>
+                        <div class="stat-label">统计所有时间 · 按消费金额排序</div>
+                    </div>
+                    <div id="merchantRankList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 类目排行标签页 -->
+        <div id="category-rank-tab" class="tab-content">
+            <div class="stats-wrapper">
+                <div class="rank-list">
+                    <div class="rank-header">
+                        <div class="rank-title">类目消费排行榜</div>
+                        <div class="stat-label">统计所有时间 · 按消费金额排序</div>
+                    </div>
+                    <div id="categoryRankList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 场景排行标签页 -->
+        <div id="channel-rank-tab" class="tab-content">
+            <div class="stats-wrapper">
+                <div class="rank-list">
+                    <div class="rank-header">
+                        <div class="rank-title">消费场景排行榜</div>
+                        <div class="stat-label">统计所有时间 · 按消费金额排序</div>
+                    </div>
+                    <div id="channelRankList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入 Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- 引入 SheetJS for Excel export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <script>
+        // ==================== 配置常量 ====================
+        const CONFIG = {
+            API_BASE: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                ? 'http://localhost:3000'
+                : 'https://billing-api.liushuaiiu.workers.dev',
+            API_KEY: 'aae90c7477688efd9f98a2eb16aa5a2f75165dd6c45205d5de289864fb90cfea',
+            CACHE_DURATION: 5 * 60 * 1000, // 5分钟缓存
+            MESSAGE_DURATION: 3000,
+            DEBOUNCE_DELAY: 300
+        };
+
+        const NECESSITY_OPTIONS = ['必要', '非必要', '可选'];
+
+        // ==================== 全局状态 ====================
+        const state = {
+            merchantsData: [],
+            categoriesData: [],
+            channelsData: [],
+            transactionsData: [],
+            allTransactionsCache: null,
+            cacheTimestamp: null,
+            currentEditingCell: null,
+            currentTimePeriod: 'today',
+            currentStatus: '',
+            currentMerchant: '',
+            batchMode: false,
+            selectedRows: new Set(),
+            charts: {
+                month: null,
+                year: null,
+                necessity: null
+            }
+        };
+
+        // ==================== 工具函数 ====================
+
+        // API 请求封装
+        async function apiFetch(url, options = {}) {
+            const headers = {
+                'Authorization': `Bearer ${CONFIG.API_KEY}`,
+                ...options.headers
+            };
+
+            const response = await fetch(url, {
+                ...options,
+                headers
+            });
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('API 密钥无效或未提供');
+                }
+                throw new Error('API 请求失败');
+            }
+            return response;
+        }
+
+        // 通过 ID 获取类目名称
+        function getCategoryNameById(id) {
+            if (!id) return '';
+            const category = state.categoriesData.find(c => c.id === parseInt(id));
+            return category ? category.name : '';
+        }
+
+        // 通过 ID 获取场景名称
+        function getChannelNameById(id) {
+            if (!id) return '';
+            const channel = state.channelsData.find(c => c.id === parseInt(id));
+            return channel ? channel.name : '';
+        }
+
+        // 显示消息
+        function showMessage(text, type = 'success') {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = `message ${type} show`;
+            setTimeout(() => {
+                msg.classList.remove('show');
+            }, CONFIG.MESSAGE_DURATION);
+        }
+
+        // 防抖函数
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // 获取时间段的日期范围
+        function getDateRange(period) {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const day = now.getDate();
+
+            switch(period) {
+                case 'today':
+                    return {
+                        start: new Date(year, month, day, 0, 0, 0),
+                        end: new Date(year, month, day, 23, 59, 59)
+                    };
+                case 'current-month':
+                    return {
+                        start: new Date(year, month, 1),
+                        end: new Date(year, month + 1, 0)
+                    };
+                case 'last-month':
+                    return {
+                        start: new Date(year, month - 1, 1),
+                        end: new Date(year, month, 0)
+                    };
+                case 'current-quarter':
+                    const quarterStart = Math.floor(month / 3) * 3;
+                    return {
+                        start: new Date(year, quarterStart, 1),
+                        end: new Date(year, quarterStart + 3, 0)
+                    };
+                case 'current-year':
+                    return {
+                        start: new Date(year, 0, 1),
+                        end: new Date(year, 11, 31)
+                    };
+                case 'last-3-months':
+                    return {
+                        start: new Date(year, month - 3, 1),
+                        end: new Date(year, month + 1, 0)
+                    };
+                case 'last-6-months':
+                    return {
+                        start: new Date(year, month - 6, 1),
+                        end: new Date(year, month + 1, 0)
+                    };
+                case 'all':
+                    return null;
+                default:
+                    return null;
+            }
+        }
+
+        // ==================== 数据加载 ====================
+
+        // 加载所有交易数据(带缓存)
+        async function loadAllTransactions(forceRefresh = false) {
+            const now = Date.now();
+            
+            // 检查缓存
+            if (!forceRefresh && 
+                state.allTransactionsCache && 
+                state.cacheTimestamp && 
+                (now - state.cacheTimestamp) < CONFIG.CACHE_DURATION) {
+                return state.allTransactionsCache;
+            }
+
+            try {
+                const response = await apiFetch(`${CONFIG.API_BASE}/api/transactions`);
+                const result = await response.json();
+                state.allTransactionsCache = result.data || [];
+                state.cacheTimestamp = now;
+                
+                // 不再从交易数据中提取类目和场景，改为从 API 加载
+                
+                return state.allTransactionsCache;
+            } catch (error) {
+                console.error('加载交易数据失败:', error);
+                throw error;
+            }
+        }
+
+        // 加载商家数据
+        async function loadMerchantsData() {
+            try {
+                const response = await apiFetch(`${CONFIG.API_BASE}/api/merchants`);
+                const result = await response.json();
+                state.merchantsData = result.data || [];
+                filterMerchants();
+            } catch (error) {
+                console.error('加载商家失败:', error);
+                showMessage('加载商家失败', 'error');
+            }
+        }
+
+        // 🆕 加载类目数据
+        async function loadCategoriesData() {
+            try {
+                const response = await apiFetch(`${CONFIG.API_BASE}/api/categories`);
+                const result = await response.json();
+                state.categoriesData = result.data || [];
+            } catch (error) {
+                console.error('加载类目失败:', error);
+                showMessage('加载类目失败', 'error');
+            }
+        }
+
+        // 🆕 加载场景数据
+        async function loadChannelsData() {
+            try {
+                const response = await apiFetch(`${CONFIG.API_BASE}/api/channels`);
+                const result = await response.json();
+                state.channelsData = result.data || [];
+            } catch (error) {
+                console.error('加载场景失败:', error);
+                showMessage('加载场景失败', 'error');
+            }
+        }
+
+        // 刷新数据
+        async function refreshData() {
+            showMessage('正在刷新数据...', 'success');
+            await loadAllTransactions(true);
+            await loadMerchantsData();
+            await loadCategoriesData();
+            await loadChannelsData();
+            await loadTransactions();
+            showMessage('数据已刷新', 'success');
+        }
+
+        // 加载并渲染账单
+        async function loadTransactions() {
+            const container = document.getElementById('tableContainer');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div><p>加载中...</p></div>';
+
+            try {
+                let allTransactions = await loadAllTransactions();
+
+                // 应用时间段筛选
+                const dateRange = getDateRange(state.currentTimePeriod);
+                if (dateRange) {
+                    allTransactions = allTransactions.filter(t => {
+                        const date = new Date(t.date);
+                        return date >= dateRange.start && date <= dateRange.end;
+                    });
+                }
+
+                // 应用状态筛选
+                if (state.currentStatus) {
+                    allTransactions = allTransactions.filter(t => {
+                        const isIncomplete = !t.merchant_id || !t.category_id || !t.channel_id;
+                        if (state.currentStatus === 'incomplete') {
+                            return isIncomplete;
+                        } else if (state.currentStatus === 'complete') {
+                            return !isIncomplete;
+                        }
+                        return true;
+                    });
+                }
+
+                // 应用商家筛选
+                if (state.currentMerchant) {
+                    allTransactions = allTransactions.filter(t => t.merchant_id == state.currentMerchant);
+                }
+
+                state.transactionsData = allTransactions;
+                renderTable(state.transactionsData);
+            } catch (error) {
+                console.error('加载账单失败:', error);
+                container.innerHTML = '<div class="loading"><p>加载失败</p></div>';
+                showMessage('加载账单失败', 'error');
+            }
+        }
+
+        // ==================== 筛选器 ====================
+
+        // 时间段选择
+        function selectTimePeriod(period) {
+            state.currentTimePeriod = period;
+
+            document.querySelectorAll('.time-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+            document.querySelector(`[data-period="${period}"]`).classList.add('active');
+
+            loadTransactions();
+        }
+
+        // 切换下拉面板
+        function toggleSelectPanel(type) {
+            const panel = document.getElementById(`${type}Panel`);
+            const trigger = panel.previousElementSibling;
+
+            document.querySelectorAll('.select-panel').forEach(p => {
+                if (p !== panel) {
+                    p.classList.remove('show');
+                    p.previousElementSibling.classList.remove('active');
+                }
+            });
+
+            panel.classList.toggle('show');
+            trigger.classList.toggle('active');
+
+            event.stopPropagation();
+        }
+
+        // 选择状态
+        function selectStatus(status) {
+            state.currentStatus = status;
+
+            const options = document.querySelectorAll('#statusPanel .select-option-item');
+            options.forEach(opt => {
+                opt.classList.remove('selected');
+                if (opt.dataset.value === status) {
+                    opt.classList.add('selected');
+                }
+            });
+
+            const text = status === '' ? '全部' :
+                        status === 'complete' ? '已完善' : '未完善';
+            document.getElementById('statusTriggerText').textContent = text;
+
+            document.getElementById('statusPanel').classList.remove('show');
+            document.querySelector('#statusPanel').previousElementSibling.classList.remove('active');
+
+            loadTransactions();
+            event.stopPropagation();
+        }
+
+        // 选择商家
+        function selectMerchant(merchantId) {
+            state.currentMerchant = merchantId;
+
+            const options = document.querySelectorAll('#merchantPanel .select-option-item');
+            options.forEach(opt => {
+                opt.classList.remove('selected');
+                if (opt.dataset.value === merchantId) {
+                    opt.classList.add('selected');
+                }
+            });
+
+            const merchant = state.merchantsData.find(m => m.id == merchantId);
+            const text = merchantId === '' ? '全部商家' : merchant?.name || '未知商家';
+            document.getElementById('merchantTriggerText').textContent = text;
+
+            document.getElementById('merchantPanel').classList.remove('show');
+            document.querySelector('#merchantPanel').previousElementSibling.classList.remove('active');
+
+            loadTransactions();
+            event.stopPropagation();
+        }
+
+        // 筛选商家
+        function filterMerchants() {
+            const search = document.getElementById('merchantSearch').value.toLowerCase();
+            const container = document.getElementById('merchantOptions');
+
+            let html = `
+                <div class="select-option-item ${state.currentMerchant === '' ? 'selected' : ''}" data-value="" onclick="selectMerchant('')">
+                    <div class="select-checkbox"></div>
+                    <span>全部商家</span>
+                </div>
+            `;
+
+            const filtered = state.merchantsData.filter(m =>
+                m.name.toLowerCase().includes(search)
+            );
+
+            filtered.forEach(m => {
+                html += `
+                    <div class="select-option-item ${state.currentMerchant == m.id ? 'selected' : ''}" data-value="${m.id}" onclick="selectMerchant('${m.id}')">
+                        <div class="select-checkbox"></div>
+                        <span>${m.name}</span>
+                    </div>
+                `;
+            });
+
+            if (filtered.length === 0 && search) {
+                html += `
+                    <div class="select-option-item" style="color: #9b9a97; cursor: default;">
+                        <span>无匹配结果</span>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // 点击外部关闭面板
+        document.addEventListener('click', function() {
+            document.querySelectorAll('.select-panel').forEach(panel => {
+                panel.classList.remove('show');
+                panel.previousElementSibling.classList.remove('active');
+            });
+        });
+
+        // ==================== 表格渲染 ====================
+
+        // 渲染表格
+        function renderTable(transactions) {
+            const container = document.getElementById('tableContainer');
+
+            if (transactions.length === 0) {
+                container.innerHTML = '<div class="loading"><p>暂无数据</p></div>';
+                return;
+            }
+
+            let html = `
+                <table>
+                    <thead>
+                        <tr class="${state.batchMode ? 'batch-mode-header' : ''}">
+                            ${state.batchMode ? '<th style="width: 40px;"><input type="checkbox" onchange="toggleSelectAll(this)"></th>' : ''}
+                            <th style="width: 100px;">日期</th>
+                            <th style="width: 200px;">摘要</th>
+                            <th style="width: 100px;">金额</th>
+                            <th style="width: 150px;">商家</th>
+                            <th style="width: 120px;">类目</th>
+                            <th style="width: 120px;">场景</th>
+                            <th style="width: 100px;">必要性</th>
+                            <th style="width: 200px;">备注</th>
+                            <th style="width: 80px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            transactions.forEach(t => {
+                const isIncomplete = !t.merchant_id || !t.category_id || !t.channel_id;
+                const merchantName = t.merchant_id ?
+                    (state.merchantsData.find(m => m.id === t.merchant_id)?.name || '未知') :
+                    '';
+                const categoryName = t.category_id ?
+                    (state.categoriesData.find(c => c.id === t.category_id)?.name || '未知') :
+                    '';
+                const channelName = t.channel_id ?
+                    (state.channelsData.find(c => c.id === t.channel_id)?.name || '未知') :
+                    '';
+                const isSelected = state.selectedRows.has(t.id);
+
+                html += `
+                    <tr data-id="${t.id}" class="${isSelected ? 'selected' : ''}${state.batchMode ? ' batch-mode-row' : ''}">
+                        ${state.batchMode ? `<td><input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleRowSelect(${t.id}, this.checked)"></td>` : ''}
+                        <td><div class="date-cell">${t.date}</div></td>
+                        <td><div class="summary-cell">${t.summary}</div></td>
+                        <td><div class="amount">¥${Number(t.amount).toFixed(2)}</div></td>
+                        <td>
+                            <div class="editable-cell" data-field="merchant" data-id="${t.id}" onclick="showSelectDropdown(this, 'merchant')">
+                                ${merchantName ? merchantName : '<span class="placeholder">选择商家</span>'}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="editable-cell" data-field="category" data-id="${t.id}" onclick="showSelectDropdown(this, 'category')">
+                                ${categoryName ? categoryName : '<span class="placeholder">选择类目</span>'}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="editable-cell" data-field="channel" data-id="${t.id}" onclick="showSelectDropdown(this, 'channel')">
+                                ${channelName ? channelName : '<span class="placeholder">选择场景</span>'}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="editable-cell" data-field="necessary" data-id="${t.id}" onclick="showSelectDropdown(this, 'necessary')">
+                                ${t.is_necessary ? t.is_necessary : '<span class="placeholder">选择</span>'}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="editable-cell" data-field="notes" data-id="${t.id}" onclick="editNotes(this)">
+                                ${t.notes ? `<span class="notes-cell" title="${t.notes}">${t.notes}</span>` : '<span class="placeholder">添加备注</span>'}
+                            </div>
+                        </td>
+                        <td>
+                            <button class="action-btn delete" onclick="deleteTransaction(${t.id})">删除</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // ==================== 批量操作 ====================
+
+        // 切换批量模式
+        function toggleBatchMode() {
+            state.batchMode = !state.batchMode;
+            state.selectedRows.clear();
+            
+            const btnText = document.getElementById('batchModeText');
+            btnText.textContent = state.batchMode ? '✖️ 退出批量' : '☑️ 批量选择';
+            
+            renderTable(state.transactionsData);
+        }
+
+        // 切换全选
+        function toggleSelectAll(checkbox) {
+            state.selectedRows.clear();
+            if (checkbox.checked) {
+                state.transactionsData.forEach(t => state.selectedRows.add(t.id));
+            }
+            renderTable(state.transactionsData);
+        }
+
+        // 切换行选择
+        function toggleRowSelect(id, checked) {
+            if (checked) {
+                state.selectedRows.add(id);
+            } else {
+                state.selectedRows.delete(id);
+            }
+            
+            const row = document.querySelector(`tr[data-id="${id}"]`);
+            if (row) {
+                row.classList.toggle('selected', checked);
+            }
+        }
+
+        // 打开批量操作模态框
+        function openBatchModal() {
+            if (state.selectedRows.size === 0) {
+                showMessage('请先选择要操作的记录', 'error');
+                return;
+            }
+            
+            document.getElementById('selectedCount').textContent = state.selectedRows.size;
+            document.getElementById('batchModal').classList.add('show');
+        }
+
+        // 关闭批量操作模态框
+        function closeBatchModal() {
+            document.getElementById('batchModal').classList.remove('show');
+        }
+
+        // 批量删除
+        async function batchDelete() {
+            if (!confirm(`确定要删除选中的 ${state.selectedRows.size} 条记录吗?`)) {
+                return;
+            }
+
+            const deletePromises = Array.from(state.selectedRows).map(id =>
+                apiFetch(`${CONFIG.API_BASE}/api/transactions/${id}`, { method: 'DELETE' })
+            );
+
+            try {
+                await Promise.all(deletePromises);
+                showMessage(`成功删除 ${state.selectedRows.size} 条记录`, 'success');
+                state.selectedRows.clear();
+                closeBatchModal();
+                await refreshData();
+            } catch (error) {
+                showMessage('批量删除失败', 'error');
+            }
+        }
+
+        // ==================== 单元格编辑 ====================
+
+        // 显示下拉选择器
+        function showSelectDropdown(cell, fieldType) {
+            // 先关闭之前的编辑
+            closeCurrentEdit();
+
+            state.currentEditingCell = cell;
+            cell.classList.add('editing');
+
+            const transaction = state.transactionsData.find(t => t.id == cell.dataset.id);
+            let currentValue = '';
+            let options = [];
+
+            switch(fieldType) {
+                case 'merchant':
+                    currentValue = transaction.merchant_id;
+                    options = state.merchantsData.map(m => ({ value: m.id, label: m.name }));
+                    break;
+                case 'category':
+                    currentValue = transaction.category_id || '';
+                    options = state.categoriesData.map(c => ({ value: c.id, label: c.name }));
+                    break;
+                case 'channel':
+                    currentValue = transaction.channel_id || '';
+                    options = state.channelsData.map(c => ({ value: c.id, label: c.name }));
+                    break;
+                case 'necessary':
+                    currentValue = transaction.is_necessary || '';
+                    options = NECESSITY_OPTIONS.map(n => ({ value: n, label: n }));
+                    break;
+            }
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'select-wrapper';
+            wrapper.innerHTML = `
+                <input type="text" class="select-input" placeholder="输入搜索或新建..." autocomplete="off">
+                <div class="select-dropdown"></div>
+            `;
+
+            cell.innerHTML = '';
+            cell.appendChild(wrapper);
+
+            const input = wrapper.querySelector('.select-input');
+            const dropdown = wrapper.querySelector('.select-dropdown');
+
+            function renderOptions(filter = '') {
+                const filtered = options.filter(opt =>
+                    opt.label.toLowerCase().includes(filter.toLowerCase())
+                );
+
+                let html = '';
+
+                // 如果有输入且不在现有选项中，显示创建选项
+                const trimmedFilter = filter.trim();
+                const exactMatch = filtered.find(opt => opt.label.toLowerCase() === trimmedFilter.toLowerCase());
+
+                if (trimmedFilter && !exactMatch) {
+                    if (fieldType === 'merchant') {
+                        html += `<div class="select-option create-new" data-action="create-merchant" data-name="${escapeHtml(trimmedFilter)}" data-transaction-id="${cell.dataset.id}">
+                            + 创建商家 "${escapeHtml(trimmedFilter)}"
+                        </div>`;
+                    } else if (fieldType === 'category' || fieldType === 'channel') {
+                        html += `<div class="select-option create-new" data-action="create-option" data-field-type="${fieldType}" data-name="${escapeHtml(trimmedFilter)}" data-transaction-id="${cell.dataset.id}">
+                            + 创建${fieldType === 'category' ? '类目' : '场景'} "${escapeHtml(trimmedFilter)}"
+                        </div>`;
+                    }
+                }
+
+                // 显示匹配的选项
+                if (filtered.length > 0) {
+                    filtered.forEach(opt => {
+                        const isSelected = (fieldType === 'merchant' ? opt.value == currentValue : opt.value === currentValue);
+                        html += `<div class="select-option ${isSelected ? 'selected' : ''}"
+                            data-action="select"
+                            data-field-type="${fieldType}"
+                            data-transaction-id="${cell.dataset.id}"
+                            data-value="${escapeHtml(opt.value)}"
+                            data-label="${escapeHtml(opt.label)}">
+                            ${escapeHtml(opt.label)}
+                        </div>`;
+                    });
+                } else if (!trimmedFilter) {
+                    html += `<div class="select-option no-results">开始输入以搜索或创建</div>`;
+                } else if (!exactMatch) {
+                    html += `<div class="select-option no-results">无匹配结果</div>`;
+                }
+
+                dropdown.innerHTML = html;
+
+                // 添加点击事件监听
+                dropdown.querySelectorAll('.select-option[data-action]').forEach(option => {
+                    option.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const action = this.dataset.action;
+
+                        if (action === 'select') {
+                            selectOption(
+                                this.dataset.fieldType,
+                                this.dataset.transactionId,
+                                this.dataset.value,
+                                this.dataset.label
+                            );
+                        } else if (action === 'create-merchant') {
+                            createNewMerchant(
+                                this.dataset.name,
+                                this.dataset.transactionId
+                            );
+                        } else if (action === 'create-option') {
+                            createNewOption(
+                                this.dataset.fieldType,
+                                this.dataset.name,
+                                this.dataset.transactionId
+                            );
+                        }
+                    });
+                });
+            }
+
+            input.addEventListener('input', (e) => {
+                renderOptions(e.target.value);
+            });
+
+            // 支持回车键快速创建
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const trimmedValue = input.value.trim();
+                    if (trimmedValue) {
+                        // 检查是否已存在
+                        const exactMatch = options.find(opt =>
+                            opt.label.toLowerCase() === trimmedValue.toLowerCase()
+                        );
+
+                        if (exactMatch) {
+                            // 如果已存在，直接选择
+                            selectOption(fieldType, cell.dataset.id, exactMatch.value, exactMatch.label);
+                        } else {
+                            // 如果不存在，创建新的
+                            if (fieldType === 'merchant') {
+                                createNewMerchant(trimmedValue, cell.dataset.id);
+                            } else if (fieldType === 'category' || fieldType === 'channel') {
+                                createNewOption(fieldType, trimmedValue, cell.dataset.id);
+                            }
+                        }
+                    }
+                } else if (e.key === 'Escape') {
+                    closeCurrentEdit();
+                    loadTransactions();
+                }
+            });
+
+            dropdown.classList.add('show');
+            renderOptions();
+            input.focus();
+
+            setTimeout(() => {
+                document.addEventListener('click', handleClickOutside);
+            }, 0);
+        }
+
+        // HTML 转义函数
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 选择选项
+        async function selectOption(fieldType, transactionId, value, label) {
+            const fieldMap = {
+                'merchant': 'merchant_id',
+                'category': 'category_id',
+                'channel': 'channel_id',
+                'necessary': 'is_necessary'
+            };
+
+            const updateData = {
+                [fieldMap[fieldType]]: (fieldType === 'merchant' || fieldType === 'category' || fieldType === 'channel') ?
+                    (value ? parseInt(value) : null) : value
+            };
+
+            try {
+                const response = await apiFetch(`${CONFIG.API_BASE}/api/transactions/${transactionId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showMessage('保存成功', 'success');
+                    closeCurrentEdit();
+                    await refreshData();
+                } else {
+                    showMessage('保存失败: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('保存失败: ' + error.message, 'error');
+            }
+        }
+
+        // 🆕 创建新选项 (类目/场景) - 调用 API 创建并选择
+        async function createNewOption(fieldType, name, transactionId) {
+            if (!name || !name.trim()) return;
+
+            const trimmedName = name.trim();
+            const apiEndpoint = fieldType === 'category' ? 'categories' : 'channels';
+
+            try {
+                const response = await apiFetch(`${CONFIG.API_BASE}/api/${apiEndpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: trimmedName })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showMessage(`${fieldType === 'category' ? '类目' : '场景'}创建成功`, 'success');
+
+                    // 重新加载数据
+                    if (fieldType === 'category') {
+                        await loadCategoriesData();
+                    } else {
+                        await loadChannelsData();
+                    }
+
+                    const newItem = result.data;
+                    if (newItem && newItem.id) {
+                        await selectOption(fieldType, transactionId, newItem.id, newItem.name);
+                    } else {
+                        closeCurrentEdit();
+                        await refreshData();
+                    }
+                } else {
+                    showMessage(`创建${fieldType === 'category' ? '类目' : '场景'}失败: ` + (result.error || '未知错误'), 'error');
+                }
+            } catch (error) {
+                showMessage(`创建${fieldType === 'category' ? '类目' : '场景'}失败: ` + error.message, 'error');
+            }
+        }
+
+        // 创建新商家 - 直接创建并选择
+        async function createNewMerchant(name, transactionId) {
+            if (!name || !name.trim()) return;
+
+            try {
+                const response = await apiFetch(`${CONFIG.API_BASE}/api/merchants`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name.trim() })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showMessage('商家创建成功', 'success');
+                    await loadMerchantsData();
+
+                    const newMerchant = result.data;
+                    if (newMerchant && newMerchant.id) {
+                        await selectOption('merchant', transactionId, newMerchant.id, newMerchant.name);
+                    } else {
+                        closeCurrentEdit();
+                        await refreshData();
+                    }
+                } else {
+                    showMessage('创建商家失败: ' + (result.error || '未知错误'), 'error');
+                }
+            } catch (error) {
+                showMessage('创建商家失败: ' + error.message, 'error');
+            }
+        }
+
+        // 编辑备注
+        function editNotes(cell) {
+            closeCurrentEdit();
+
+            state.currentEditingCell = cell;
+            cell.classList.add('editing');
+
+            const transaction = state.transactionsData.find(t => t.id == cell.dataset.id);
+            const currentNotes = transaction.notes || '';
+
+            cell.innerHTML = `<textarea class="notes-input">${currentNotes}</textarea>`;
+
+            const textarea = cell.querySelector('.notes-input');
+            textarea.focus();
+            textarea.select();
+
+            textarea.addEventListener('blur', async () => {
+                const newNotes = textarea.value.trim();
+
+                try {
+                    const response = await apiFetch(`${CONFIG.API_BASE}/api/transactions/${cell.dataset.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ notes: newNotes || null })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        showMessage('备注已保存', 'success');
+                        closeCurrentEdit();
+                        await refreshData();
+                    } else {
+                        showMessage('保存失败', 'error');
+                    }
+                } catch (error) {
+                    showMessage('保存失败: ' + error.message, 'error');
+                }
+            });
+
+            textarea.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    textarea.blur();
+                } else if (e.key === 'Escape') {
+                    closeCurrentEdit();
+                    loadTransactions();
+                }
+            });
+        }
+
+        // 关闭当前编辑
+        function closeCurrentEdit() {
+            if (state.currentEditingCell) {
+                const cell = state.currentEditingCell;
+                cell.classList.remove('editing');
+
+                // 恢复单元格原始内容
+                const transactionId = cell.dataset.id;
+                const fieldType = cell.dataset.field;
+                const transaction = state.transactionsData.find(t => t.id == transactionId);
+
+                if (transaction && fieldType) {
+                    let displayValue = '';
+
+                    switch(fieldType) {
+                        case 'merchant':
+                            if (transaction.merchant_id) {
+                                const merchant = state.merchantsData.find(m => m.id === transaction.merchant_id);
+                                displayValue = merchant?.name || '未知';
+                            } else {
+                                displayValue = '<span class="placeholder">选择商家</span>';
+                            }
+                            break;
+                        case 'category':
+                            if (transaction.category_id) {
+                                const category = state.categoriesData.find(c => c.id === transaction.category_id);
+                                displayValue = category?.name || '未知';
+                            } else {
+                                displayValue = '<span class="placeholder">选择类目</span>';
+                            }
+                            break;
+                        case 'channel':
+                            if (transaction.channel_id) {
+                                const channel = state.channelsData.find(c => c.id === transaction.channel_id);
+                                displayValue = channel?.name || '未知';
+                            } else {
+                                displayValue = '<span class="placeholder">选择场景</span>';
+                            }
+                            break;
+                        case 'necessary':
+                            displayValue = transaction.is_necessary ? transaction.is_necessary : '<span class="placeholder">选择</span>';
+                            break;
+                        case 'notes':
+                            displayValue = transaction.notes ? `<span class="notes-cell" title="${transaction.notes}">${transaction.notes}</span>` : '<span class="placeholder">添加备注</span>';
+                            break;
+                    }
+
+                    cell.innerHTML = displayValue;
+                }
+
+                state.currentEditingCell = null;
+            }
+            document.removeEventListener('click', handleClickOutside);
+        }
+
+        // 点击外部处理
+        function handleClickOutside(e) {
+            if (state.currentEditingCell && !state.currentEditingCell.contains(e.target)) {
+                closeCurrentEdit();
+            }
+        }
+
+        // 删除账单
+        async function deleteTransaction(id) {
+            if (!confirm('确定要删除这条账单吗?')) return;
+
+            try {
+                const response = await apiFetch(`${CONFIG.API_BASE}/api/transactions/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showMessage('删除成功', 'success');
+                    await refreshData();
+                } else {
+                    showMessage('删除失败', 'error');
+                }
+            } catch (error) {
+                showMessage('删除失败: ' + error.message, 'error');
+            }
+        }
+
+        // ==================== 数据导出 ====================
+
+        // 导出为 CSV
+        function exportToCSV() {
+            if (state.transactionsData.length === 0) {
+                showMessage('没有数据可导出', 'error');
+                return;
+            }
+
+            const headers = ['日期', '摘要', '金额', '商家', '类目', '场景', '必要性', '备注'];
+            const rows = state.transactionsData.map(t => {
+                const merchantName = t.merchant_id ?
+                    (state.merchantsData.find(m => m.id === t.merchant_id)?.name || '未知') : '';
+                
+                return [
+                    t.date,
+                    t.summary,
+                    t.amount,
+                    merchantName,
+                    t.category || '',
+                    t.payment_channel || '',
+                    t.is_necessary || '',
+                    t.notes || ''
+                ];
+            });
+
+            let csvContent = '\uFEFF'; // UTF-8 BOM
+            csvContent += headers.join(',') + '\n';
+            rows.forEach(row => {
+                csvContent += row.map(cell => `"${cell}"`).join(',') + '\n';
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `账单数据_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+
+            showMessage('CSV 导出成功', 'success');
+        }
+
+        // 导出为 Excel
+        function exportToExcel() {
+            if (state.transactionsData.length === 0) {
+                showMessage('没有数据可导出', 'error');
+                return;
+            }
+
+            if (typeof XLSX === 'undefined') {
+                showMessage('Excel 导出库未加载', 'error');
+                return;
+            }
+
+            const data = state.transactionsData.map(t => {
+                const merchantName = t.merchant_id ?
+                    (state.merchantsData.find(m => m.id === t.merchant_id)?.name || '未知') : '';
+                
+                return {
+                    '日期': t.date,
+                    '摘要': t.summary,
+                    '金额': Number(t.amount),
+                    '商家': merchantName,
+                    '类目': t.category || '',
+                    '场景': t.payment_channel || '',
+                    '必要性': t.is_necessary || '',
+                    '备注': t.notes || ''
+                };
+            });
+
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, '账单数据');
+
+            XLSX.writeFile(wb, `账单数据_${new Date().toISOString().split('T')[0]}.xlsx`);
+
+            showMessage('Excel 导出成功', 'success');
+        }
+
+        // ==================== 统计分析 ====================
+
+        // 标签页切换
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            event.target.classList.add('active');
+
+            switch(tabName) {
+                case 'stats':
+                    loadStatistics();
+                    break;
+                case 'necessity':
+                    loadNecessityAnalysis();
+                    break;
+                case 'merchant-rank':
+                    loadMerchantRank();
+                    break;
+                case 'category-rank':
+                    loadCategoryRank();
+                    break;
+                case 'channel-rank':
+                    loadChannelRank();
+                    break;
+            }
+        }
+
+        // 加载统计数据
+        async function loadStatistics() {
+            try {
+                const allTransactions = await loadAllTransactions();
+
+                const now = new Date();
+                const currentYear = now.getFullYear();
+                const currentMonth = now.getMonth() + 1;
+
+                const monthTransactions = allTransactions.filter(t => {
+                    const date = new Date(t.date);
+                    return date.getFullYear() === currentYear &&
+                           date.getMonth() + 1 === currentMonth;
+                });
+                const monthTotal = monthTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
+
+                const yearTransactions = allTransactions.filter(t => {
+                    const date = new Date(t.date);
+                    return date.getFullYear() === currentYear;
+                });
+                const yearTotal = yearTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
+
+                const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+                const dailyAvg = monthTotal / daysInMonth;
+
+                document.getElementById('monthTotal').textContent = `¥${monthTotal.toFixed(2)}`;
+                document.getElementById('yearTotal').textContent = `¥${yearTotal.toFixed(2)}`;
+                document.getElementById('dailyAvg').textContent = `¥${dailyAvg.toFixed(2)}`;
+
+                drawMonthChart(monthTransactions, currentYear, currentMonth);
+                drawYearChart(yearTransactions, currentYear);
+
+            } catch (error) {
+                console.error('加载统计数据失败:', error);
+                showMessage('加载统计数据失败', 'error');
+            }
+        }
+
+        // 绘制本月消费趋势图
+        function drawMonthChart(transactions, year, month) {
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const dailyData = new Array(daysInMonth).fill(0);
+
+            transactions.forEach(t => {
+                const date = new Date(t.date);
+                const day = date.getDate();
+                dailyData[day - 1] += Number(t.amount);
+            });
+
+            const labels = Array.from({ length: daysInMonth }, (_, i) => `${i + 1}日`);
+            const maxValue = Math.max(...dailyData, 1);
+            const yAxisMax = Math.ceil(maxValue * 1.2 / 100) * 100;
+
+            const ctx = document.getElementById('monthChart');
+
+            if (state.charts.month) {
+                state.charts.month.destroy();
+            }
+
+            state.charts.month = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '每日消费',
+                        data: dailyData,
+                        borderColor: '#2383e2',
+                        backgroundColor: 'rgba(35, 131, 226, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        pointBackgroundColor: '#2383e2',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return '消费: ¥' + context.parsed.y.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: yAxisMax,
+                            ticks: {
+                                callback: function(value) {
+                                    return '¥' + value;
+                                },
+                                stepSize: Math.ceil(yAxisMax / 5)
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                maxRotation: 0,
+                                autoSkip: true,
+                                maxTicksLimit: 15,
+                                font: {
+                                    size: 10
+                                }
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 绘制本年消费趋势图
+        function drawYearChart(transactions, year) {
+            const monthlyData = new Array(12).fill(0);
+
+            transactions.forEach(t => {
+                const date = new Date(t.date);
+                const month = date.getMonth();
+                monthlyData[month] += Number(t.amount);
+            });
+
+            const labels = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+            const maxValue = Math.max(...monthlyData, 1);
+            const yAxisMax = Math.ceil(maxValue * 1.2 / 1000) * 1000;
+
+            const ctx = document.getElementById('yearChart');
+
+            if (state.charts.year) {
+                state.charts.year.destroy();
+            }
+
+            state.charts.year = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '每月消费',
+                        data: monthlyData,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#10b981',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return '消费: ¥' + context.parsed.y.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: yAxisMax,
+                            ticks: {
+                                callback: function(value) {
+                                    return '¥' + value;
+                                },
+                                stepSize: Math.ceil(yAxisMax / 5),
+                                font: {
+                                    size: 11
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: {
+                                    size: 11
+                                }
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 加载必要性分析
+        async function loadNecessityAnalysis() {
+            try {
+                const allTransactions = await loadAllTransactions();
+
+                const now = new Date();
+                const currentYear = now.getFullYear();
+
+                const yearTransactions = allTransactions.filter(t => {
+                    const date = new Date(t.date);
+                    return date.getFullYear() === currentYear;
+                });
+
+                const monthlyData = {
+                    necessary: new Array(12).fill(0),
+                    unnecessary: new Array(12).fill(0),
+                    optional: new Array(12).fill(0)
+                };
+
+                yearTransactions.forEach(t => {
+                    const date = new Date(t.date);
+                    const month = date.getMonth();
+                    const amount = Number(t.amount);
+
+                    if (t.is_necessary === '必要') {
+                        monthlyData.necessary[month] += amount;
+                    } else if (t.is_necessary === '非必要') {
+                        monthlyData.unnecessary[month] += amount;
+                    } else if (t.is_necessary === '可选') {
+                        monthlyData.optional[month] += amount;
+                    }
+                });
+
+                const necessaryTotal = monthlyData.necessary.reduce((a, b) => a + b, 0);
+                const unnecessaryTotal = monthlyData.unnecessary.reduce((a, b) => a + b, 0);
+                const optionalTotal = monthlyData.optional.reduce((a, b) => a + b, 0);
+
+                document.getElementById('necessaryTotal').textContent = `¥${necessaryTotal.toFixed(2)}`;
+                document.getElementById('unnecessaryTotal').textContent = `¥${unnecessaryTotal.toFixed(2)}`;
+                document.getElementById('optionalTotal').textContent = `¥${optionalTotal.toFixed(2)}`;
+
+                drawNecessityChart(monthlyData);
+
+            } catch (error) {
+                console.error('加载必要性分析失败:', error);
+                showMessage('加载必要性分析失败', 'error');
+            }
+        }
+
+        // 绘制必要性堆叠图
+        function drawNecessityChart(data) {
+            const labels = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+            const ctx = document.getElementById('necessityChart');
+
+            if (state.charts.necessity) {
+                state.charts.necessity.destroy();
+            }
+
+            state.charts.necessity = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: '必要',
+                            data: data.necessary,
+                            backgroundColor: '#10b981',
+                            borderWidth: 0
+                        },
+                        {
+                            label: '非必要',
+                            data: data.unnecessary,
+                            backgroundColor: '#ef4444',
+                            borderWidth: 0
+                        },
+                        {
+                            label: '可选',
+                            data: data.optional,
+                            backgroundColor: '#f59e0b',
+                            borderWidth: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ¥' + context.parsed.y.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            ticks: {
+                                font: { size: 11 }
+                            }
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '¥' + value;
+                                },
+                                font: { size: 11 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 加载商家排行
+        async function loadMerchantRank() {
+            try {
+                const allTransactions = await loadAllTransactions();
+
+                const merchantStats = {};
+                allTransactions.forEach(t => {
+                    if (t.merchant_id) {
+                        if (!merchantStats[t.merchant_id]) {
+                            const merchant = state.merchantsData.find(m => m.id === t.merchant_id);
+                            merchantStats[t.merchant_id] = {
+                                id: t.merchant_id,
+                                name: merchant?.name || '未知商家',
+                                total: 0,
+                                count: 0
+                            };
+                        }
+                        merchantStats[t.merchant_id].total += Number(t.amount);
+                        merchantStats[t.merchant_id].count += 1;
+                    }
+                });
+
+                const rankList = Object.values(merchantStats)
+                    .sort((a, b) => b.total - a.total)
+                    .slice(0, 20);
+
+                renderRankList('merchantRankList', rankList);
+
+            } catch (error) {
+                console.error('加载商家排行失败:', error);
+                showMessage('加载商家排行失败', 'error');
+            }
+        }
+
+        // 加载类目排行
+        async function loadCategoryRank() {
+            try {
+                const allTransactions = await loadAllTransactions();
+
+                const categoryStats = {};
+                allTransactions.forEach(t => {
+                    // 使用 category_id 而不是 category
+                    if (t.category_id) {
+                        const categoryId = t.category_id;
+                        const categoryName = getCategoryNameById(categoryId);
+
+                        if (!categoryStats[categoryId]) {
+                            categoryStats[categoryId] = {
+                                name: categoryName,
+                                total: 0,
+                                count: 0
+                            };
+                        }
+                        categoryStats[categoryId].total += Number(t.amount);
+                        categoryStats[categoryId].count += 1;
+                    }
+                });
+
+                const rankList = Object.values(categoryStats)
+                    .sort((a, b) => b.total - a.total)
+                    .slice(0, 20);
+
+                renderRankList('categoryRankList', rankList);
+
+            } catch (error) {
+                console.error('加载类目排行失败:', error);
+                showMessage('加载类目排行失败', 'error');
+            }
+        }
+
+        // 加载场景排行
+        async function loadChannelRank() {
+            try {
+                const allTransactions = await loadAllTransactions();
+
+                const channelStats = {};
+                allTransactions.forEach(t => {
+                    // 使用 channel_id 而不是 payment_channel
+                    if (t.channel_id) {
+                        const channelId = t.channel_id;
+                        const channelName = getChannelNameById(channelId);
+
+                        if (!channelStats[channelId]) {
+                            channelStats[channelId] = {
+                                name: channelName,
+                                total: 0,
+                                count: 0
+                            };
+                        }
+                        channelStats[channelId].total += Number(t.amount);
+                        channelStats[channelId].count += 1;
+                    }
+                });
+
+                const rankList = Object.values(channelStats)
+                    .sort((a, b) => b.total - a.total)
+                    .slice(0, 20);
+
+                renderRankList('channelRankList', rankList);
+
+            } catch (error) {
+                console.error('加载场景排行失败:', error);
+                showMessage('加载场景排行失败', 'error');
+            }
+        }
+
+        // 渲染排行榜列表
+        function renderRankList(containerId, rankList) {
+            const container = document.getElementById(containerId);
+
+            if (rankList.length === 0) {
+                container.innerHTML = '<div style="padding: 40px; text-align: center; color: #9b9a97;">暂无数据</div>';
+                return;
+            }
+
+            const maxValue = rankList[0].total;
+
+            let html = '';
+            rankList.forEach((item, index) => {
+                const percentage = (item.total / maxValue * 100).toFixed(0);
+
+                html += `
+                    <div class="rank-item">
+                        <div class="rank-info">
+                            <div class="rank-name">${item.name}</div>
+                            <div class="rank-details">${item.count} 笔交易</div>
+                        </div>
+                        <div class="rank-value">¥${item.total.toFixed(2)}</div>
+                        <div class="rank-bar">
+                            <div class="rank-bar-fill" style="width: ${percentage}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // ==================== 键盘快捷键 ====================
+
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + E: 导出 Excel
+            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+                e.preventDefault();
+                exportToExcel();
+            }
+            
+            // Ctrl/Cmd + S: 导出 CSV
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                exportToCSV();
+            }
+            
+            // Ctrl/Cmd + R: 刷新数据
+            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                e.preventDefault();
+                refreshData();
+            }
+            
+            // Ctrl/Cmd + B: 切换批量模式
+            if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+                e.preventDefault();
+                toggleBatchMode();
+            }
+        });
+
+        // ==================== 初始化 ====================
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await loadMerchantsData();
+                await loadCategoriesData();
+                await loadChannelsData();
+                await loadAllTransactions();
+                await loadTransactions();
+                console.log('✅ 系统已加载 (优化版 v3.1)');
+                console.log('💡 快捷键: Ctrl+E(导出Excel) | Ctrl+S(导出CSV) | Ctrl+R(刷新) | Ctrl+B(批量模式)');
+                console.log('🔧 修复: 编辑单元格时自动关闭上一个编辑框');
+                console.log('🔧 修复: 支持包含特殊字符的商家名称(如单引号)');
+                console.log('🆕 新增: 类目和场景使用独立数据表管理');
+                console.log('🔧 修复: 类目排行和场景排行使用新的字段结构 (category_id/channel_id)');
+            } catch (error) {
+                console.error('初始化失败:', error);
+                showMessage('系统初始化失败', 'error');
+            }
+        });
+    </script>
+</body>
+</html>
