@@ -1029,11 +1029,6 @@
             <div style="padding: 20px 40px;">
                 <!-- 工具栏 -->
                 <div class="toolbar">
-                    <button class="toolbar-btn primary" onclick="exportToExcel()">导出 Excel</button>
-                    <button class="toolbar-btn" onclick="toggleBatchMode()">
-                        <span id="batchModeText">批量选择</span>
-                    </button>
-                    <button class="toolbar-btn" onclick="refreshData()">刷新数据</button>
                 </div>
 
                 <div class="filters">
@@ -1451,17 +1446,6 @@
             }
         }
 
-        // 刷新数据
-        async function refreshData() {
-            showMessage('正在刷新数据...', 'success');
-            await loadAllTransactions(true);
-            await loadMerchantsData();
-            await loadCategoriesData();
-            await loadChannelsData();
-            await loadTransactions();
-            showMessage('数据已刷新', 'success');
-        }
-
         // 加载并渲染账单
         async function loadTransactions() {
             const container = document.getElementById('tableContainer');
@@ -1720,15 +1704,6 @@
         // ==================== 批量操作 ====================
 
         // 切换批量模式
-        function toggleBatchMode() {
-            state.batchMode = !state.batchMode;
-            state.selectedRows.clear();
-            
-            const btnText = document.getElementById('batchModeText');
-            btnText.textContent = state.batchMode ? '✖️ 退出批量' : '☑️ 批量选择';
-            
-            renderTable(state.transactionsData);
-        }
 
         // 切换全选
         function toggleSelectAll(checkbox) {
@@ -1784,7 +1759,7 @@
                 showMessage(`成功删除 ${state.selectedRows.size} 条记录`, 'success');
                 state.selectedRows.clear();
                 closeBatchModal();
-                await refreshData();
+                await loadTransactions();
             } catch (error) {
                 showMessage('批量删除失败', 'error');
             }
@@ -1984,7 +1959,7 @@
                 if (result.success) {
                     showMessage('保存成功', 'success');
                     closeCurrentEdit();
-                    await refreshData();
+                    await loadTransactions();
                 } else {
                     showMessage('保存失败: ' + result.error, 'error');
                 }
@@ -2024,7 +1999,7 @@
                         await selectOption(fieldType, transactionId, newItem.id, newItem.name);
                     } else {
                         closeCurrentEdit();
-                        await refreshData();
+                        await loadTransactions();
                     }
                 } else {
                     showMessage(`创建${fieldType === 'category' ? '类目' : '场景'}失败: ` + (result.error || '未知错误'), 'error');
@@ -2056,7 +2031,7 @@
                         await selectOption('merchant', transactionId, newMerchant.id, newMerchant.name);
                     } else {
                         closeCurrentEdit();
-                        await refreshData();
+                        await loadTransactions();
                     }
                 } else {
                     showMessage('创建商家失败: ' + (result.error || '未知错误'), 'error');
@@ -2097,7 +2072,7 @@
                     if (result.success) {
                         showMessage('备注已保存', 'success');
                         closeCurrentEdit();
-                        await refreshData();
+                        await loadTransactions();
                     } else {
                         showMessage('保存失败', 'error');
                     }
@@ -2192,7 +2167,7 @@
 
                 if (result.success) {
                     showMessage('删除成功', 'success');
-                    await refreshData();
+                    await loadTransactions();
                 } else {
                     showMessage('删除失败', 'error');
                 }
@@ -2202,43 +2177,6 @@
         }
 
         // ==================== 数据导出 ====================
-
-        // 导出为 Excel
-        function exportToExcel() {
-            if (state.transactionsData.length === 0) {
-                showMessage('没有数据可导出', 'error');
-                return;
-            }
-
-            if (typeof XLSX === 'undefined') {
-                showMessage('Excel 导出库未加载', 'error');
-                return;
-            }
-
-            const data = state.transactionsData.map(t => {
-                const merchantName = t.merchant_id ?
-                    (state.merchantsData.find(m => m.id === t.merchant_id)?.name || '未知') : '';
-                
-                return {
-                    '日期': t.date,
-                    '摘要': t.summary,
-                    '金额': Number(t.amount),
-                    '商家': merchantName,
-                    '类目': t.category || '',
-                    '场景': t.payment_channel || '',
-                    '必要性': t.is_necessary || '',
-                    '备注': t.notes || ''
-                };
-            });
-
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, '账单数据');
-
-            XLSX.writeFile(wb, `账单数据_${new Date().toISOString().split('T')[0]}.xlsx`);
-
-            showMessage('Excel 导出成功', 'success');
-        }
 
         // ==================== 统计分析 ====================
 
@@ -2757,24 +2695,6 @@
 
         // ==================== 键盘快捷键 ====================
 
-        document.addEventListener('keydown', function(e) {
-            // Ctrl/Cmd + E: 导出 Excel
-            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
-                e.preventDefault();
-                exportToExcel();
-            }
-            // Ctrl/Cmd + R: 刷新数据
-            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
-                e.preventDefault();
-                refreshData();
-            }
-            
-            // Ctrl/Cmd + B: 切换批量模式
-            if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
-                e.preventDefault();
-                toggleBatchMode();
-            }
-        });
 
         // ==================== 初始化 ====================
 
@@ -2786,7 +2706,6 @@
                 await loadAllTransactions();
                 await loadTransactions();
                 console.log('✅ 系统已加载 (优化版 v3.1)');
-                console.log('💡 快捷键: Ctrl+E(导出Excel) | Ctrl+R(刷新) | Ctrl+B(批量模式)');
                 console.log('🔧 修复: 编辑单元格时自动关闭上一个编辑框');
                 console.log('🔧 修复: 支持包含特殊字符的商家名称(如单引号)');
                 console.log('🆕 新增: 类目和场景使用独立数据表管理');
